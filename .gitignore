@@ -1,0 +1,19 @@
+# Rust
+/target
+
+# macOS
+.DS_Store
+
+# IDE
+/.idea/
+/.vscode/
+/ .zed/
+
+# Project data
+/fit_output/
+/fit_source/
+
+# Agent
+.claude
+.codex
+.gemini
