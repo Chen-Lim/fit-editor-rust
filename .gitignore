@@ -17,3 +17,10 @@
 .claude
 .codex
 .gemini
+
+
+# Added by cargo
+#
+# already existing elements were commented out
+
+#/target
