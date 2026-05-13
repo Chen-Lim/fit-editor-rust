@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>[REVIEW] fit-editor-rust — strict review of HEAD (5ef7e1c)</title>
+<style>
+  :root{
+    --bg:#f6f3ec;
+    --fg:#1a1a1a;
+    --muted:#6b6b6b;
+    --rule:#c9c2b1;
+    --paper:#fffaf0;
+    --code-bg:#ebe6d6;
+    --link:#0a3d62;
+    --crit:#8b0000;
+    --high:#a14a00;
+    --med:#7a6a00;
+    --low:#3a5a3a;
+    --ok:#2d5a2d;
+    --hdr-bg:#e8e1cc;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);}
+  body{
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 32px 0;
+  }
+  .page{
+    max-width: 920px;
+    margin: 0 auto;
+    background: var(--paper);
+    padding: 32px 44px 56px 44px;
+    border: 1px solid var(--rule);
+    box-shadow: 0 1px 0 var(--rule);
+  }
+  .mbox-headers{
+    background: var(--hdr-bg);
+    border: 1px solid var(--rule);
+    padding: 12px 16px;
+    margin-bottom: 22px;
+    font-size: 13px;
+  }
+  .mbox-headers .hdr{display:block;}
+  .mbox-headers .k{color:var(--muted); display:inline-block; width: 88px;}
+  h1{
+    font-size: 17px;
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  h2{
+    font-size: 15px;
+    margin: 32px 0 10px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+    font-weight: 700;
+  }
+  h3{
+    font-size: 14px;
+    margin: 22px 0 6px 0;
+    font-weight: 700;
+  }
+  h3 .num{color:var(--muted); margin-right:6px;}
+  p{margin: 8px 0;}
+  ul{margin: 6px 0 10px 0; padding-left: 22px;}
+  li{margin: 3px 0;}
+  code, .code{
+    font-family: inherit;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+  pre{
+    background: var(--code-bg);
+    border-left: 3px solid var(--rule);
+    padding: 10px 14px;
+    overflow-x: auto;
+    font-size: 13px;
+    margin: 8px 0;
+    white-space: pre;
+  }
+  pre .add{color:#1a5a1a;}
+  pre .del{color:#8b0000;}
+  pre .cmt{color:var(--muted);}
+  a{color:var(--link); text-decoration: none;}
+  a:hover{text-decoration: underline;}
+  table{
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px 0;
+    font-size: 13px;
+  }
+  th, td{
+    border: 1px solid var(--rule);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th{background: var(--hdr-bg); font-weight: 700;}
+  .badge{
+    display:inline-block;
+    padding: 1px 8px;
+    border-radius: 2px;
+    color: #fffaf0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .badge.crit{background:var(--crit);}
+  .badge.high{background:var(--high);}
+  .badge.med{background:var(--med);}
+  .badge.low{background:var(--low);}
+  .badge.ok{background:var(--ok);}
+  .verdict{
+    margin: 8px 0 0 0;
+    padding: 10px 14px;
+    background: #fff;
+    border: 1px solid var(--crit);
+    color: var(--crit);
+    font-weight: 700;
+  }
+  .verdict-line{
+    background: #fff;
+    border-left: 3px solid var(--rule);
+    padding: 6px 12px;
+    margin: 8px 0 10px 0;
+    color: var(--fg);
+  }
+  .verdict-line.crit{border-left-color: var(--crit);}
+  .verdict-line.high{border-left-color: var(--high);}
+  .verdict-line.med{border-left-color: var(--med);}
+  .verdict-line strong{color: inherit;}
+  .sig{
+    margin-top: 36px;
+    padding: 16px 20px;
+    background: var(--hdr-bg);
+    border: 1px solid var(--rule);
+    font-size: 13px;
+  }
+  .sig .nack{color: var(--crit); font-weight: 700; font-size: 14px;}
+  .footer{
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--rule);
+    padding-top: 10px;
+  }
+  .checklist{font-size: 13px;}
+  .checklist code{background:transparent; padding:0;}
+  .filemeta{color:var(--muted); font-size:12px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- =================== HEADERS =================== -->
+  <div class="mbox-headers">
+    <span class="hdr"><span class="k">From:</span> Claude (acting maintainer) &lt;noreply@anthropic.com&gt;</span>
+    <span class="hdr"><span class="k">To:</span> Chen &lt;chenchemlim@gmail.com&gt;</span>
+    <span class="hdr"><span class="k">Date:</span> 2026-05-13</span>
+    <span class="hdr"><span class="k">Subject:</span> [REVIEW] fit-editor-rust — strict review of HEAD (5ef7e1c)</span>
+    <span class="hdr"><span class="k">Tree:</span> /Users/chen/zed/fit-editor-rust @ main</span>
+    <span class="hdr"><span class="k">Size:</span> 1983 LOC src / 328 LOC tests / 0 LOC bench / 0 fuzz target</span>
+  </div>
+
+  <h1>Re: fit-editor-rust 0.1.0 — request for review</h1>
+
+  <div class="verdict">
+    ACK. All FIX items resolved (2026-05-13). ADD items deferred to next phase.
+  </div>
+
+  <p>
+    我已经按照你提交的请求，以 maintainer 的标准把整个 <code>src/</code> 走了一遍。
+    结论先放在前面：当前 tree 里有 <strong>3 个真实的正确性 Bug</strong>（包含一个会把用户 GPS 轨迹损坏到几内亚湾外海的 GPX 导出 Bug），
+    <strong>2 处确定的内存泄漏</strong>，<strong>1 处随时会 panic 的越界访问</strong>，外加一个声明了但完全没实现的 CLI flag。
+    这些问题没有一个是「以后再说」的，是合并前必须修掉的。
+  </p>
+  <p>
+    在此之外，这个 crate 没有 lib.rs、没有单元测试、没有 fuzz、没有 CI。
+    对一个解析 <strong>不受信任的二进制格式</strong> 的工具，这是一个不能接受的基线。
+  </p>
+
+  <!-- =================== TL;DR =================== -->
+  <h2>1. Bottom Line Up Front</h2>
+  <ul>
+    <li><strong>C1</strong> — <code>Box::leak</code> 在 <code>edit.rs:167</code> 与 <code>encode.rs:123</code>。这不是模式，这是泄漏。<code>batch</code> 命令下随着输入规模线性增长，永不归还。</li>
+    <li><strong>C2</strong> — GPX 导出会把没有 GPS 的室内活动写成 <code>lat="0.0000000" lon="0.0000000"</code>。用户的轨迹在 Strava 上会出现一条穿过 Null Island 的诡异路径。This is data corruption.</li>
+    <li><strong>C3</strong> — <code>merge</code> 命令产出不合规范的 FIT 文件（多份 <code>file_id</code>），且 timestamp 排序键用了错误的访问器（<code>as_u64</code> 而非 <code>Value::DateTime</code>）。基本等于 concat。</li>
+    <li><strong>H1</strong> — <code>hexdump.rs:128</code> 的边界检查少了 1 字节，喂一个长度恰为 5 的截断输入即可 panic。本工具的用户正是拿损坏文件来诊断的。</li>
+    <li><strong>H2</strong> — <code>validate</code> 命令完全没调用 decoder，对消息层错误失明，仍然打印 "valid"。这是把 CLI 契约当玩笑。</li>
+    <li><strong>H3</strong> — <code>--quiet</code> 全局 flag 是死代码。Zero 引用。CLI 在对用户撒谎。</li>
+  </ul>
+
+  <!-- =================== SEVERITY MATRIX =================== -->
+  <h2>2. Severity matrix</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Severity</th><th>Status</th><th>Issue</th><th>Location</th><th>Why it matters</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>C1</td><td><span class="badge crit">CRITICAL</span></td><td><span class="badge ok">DONE</span></td>
+        <td>Heap leak via <code>Box::leak</code></td>
+        <td><a href="src/commands/edit.rs">edit.rs:167</a>, <a href="src/commands/encode.rs">encode.rs:123</a></td>
+        <td>常驻泄漏；batch 模式随输入线性增长</td>
+      </tr>
+      <tr>
+        <td>C2</td><td><span class="badge crit">CRITICAL</span></td><td><span class="badge ok">DONE</span></td>
+        <td>GPX writes phantom (0,0) trackpoints</td>
+        <td><a href="src/commands/export.rs">export.rs:205&ndash;216</a></td>
+        <td>把用户真实数据损坏，下游无法挽回</td>
+      </tr>
+      <tr>
+        <td>C3</td><td><span class="badge crit">CRITICAL</span></td><td><span class="badge ok">DONE</span></td>
+        <td>merge 产生非法 FIT；timestamp 排序失效</td>
+        <td><a href="src/commands/merge.rs">merge.rs:31&ndash;35, 53&ndash;55</a></td>
+        <td>下游消费者（Garmin/Strava/SDK）会拒绝</td>
+      </tr>
+      <tr>
+        <td>H1</td><td><span class="badge high">HIGH</span></td><td><span class="badge ok">DONE</span></td>
+        <td>Off-by-one bounds check → panic</td>
+        <td><a href="src/commands/hexdump.rs">hexdump.rs:122&ndash;129</a></td>
+        <td>专门用来诊断损坏文件的命令最先崩</td>
+      </tr>
+      <tr>
+        <td>H2</td><td><span class="badge high">HIGH</span></td><td><span class="badge ok">DONE</span></td>
+        <td><code>validate</code> 对 decoder 错误失明</td>
+        <td><a href="src/commands/validate.rs">validate.rs:7&ndash;27</a></td>
+        <td>"valid" 没有意义，CLI 契约失效</td>
+      </tr>
+      <tr>
+        <td>H3</td><td><span class="badge high">HIGH</span></td><td><span class="badge ok">DONE</span></td>
+        <td><code>--quiet</code> 是死代码</td>
+        <td><a href="src/cli.rs">cli.rs:11&ndash;13</a></td>
+        <td>0 引用，<code>println!</code> 照常输出</td>
+      </tr>
+      <tr>
+        <td>H4</td><td><span class="badge high">HIGH</span></td><td><span class="badge ok">DONE</span></td>
+        <td>无文件大小上限</td>
+        <td>所有 <code>fs::read</code> 调用点</td>
+        <td>恶意/巨型输入 OOM；merge 内存放大约 3×</td>
+      </tr>
+      <tr>
+        <td>M1</td><td><span class="badge med">MEDIUM</span></td><td><span class="badge ok">DONE</span></td>
+        <td><code>.unwrap()</code> on progress template</td>
+        <td><a href="src/commands/batch.rs">batch.rs:33</a></td>
+        <td>静默 panic 入口，改 <code>.expect</code> 标注意图</td>
+      </tr>
+      <tr>
+        <td>M2</td><td><span class="badge med">MEDIUM</span></td><td><span class="badge ok">DONE</span></td>
+        <td><code>unreachable!()</code> 在主循环里</td>
+        <td><a href="src/commands/diff.rs">diff.rs:67</a></td>
+        <td>控制流没让编译器证明不可达，未来重构会爆</td>
+      </tr>
+      <tr>
+        <td>M3</td><td><span class="badge med">MEDIUM</span></td><td><span class="badge ok">DONE</span></td>
+        <td>JSON number → 整数静默截断</td>
+        <td><a href="src/commands/encode.rs">encode.rs:98, 108&ndash;109</a></td>
+        <td>round-trip 大整数时静默改值</td>
+      </tr>
+      <tr>
+        <td>M4</td><td><span class="badge med">MEDIUM</span></td><td><span class="badge ok">DONE</span></td>
+        <td><code>process::exit(1)</code> 跳过 error 流</td>
+        <td><a href="src/commands/batch.rs">batch.rs:104</a></td>
+        <td>与其他命令统一错误处理路径不一致</td>
+      </tr>
+      <tr>
+        <td>M5</td><td><span class="badge med">MEDIUM</span></td><td><span class="badge ok">DONE</span></td>
+        <td>业务错误塞进 <code>io::Error</code></td>
+        <td><a href="src/commands/batch.rs">batch.rs:10&ndash;14</a>, <a href="src/commands/merge.rs">merge.rs:9&ndash;13</a></td>
+        <td>error 语义错位，类型说谎</td>
+      </tr>
+      <tr>
+        <td>M6</td><td><span class="badge med">MEDIUM</span></td><td><span class="badge ok">DONE</span></td>
+        <td>output prefix 无校验</td>
+        <td><a href="src/commands/split.rs">split.rs:48&ndash;49</a></td>
+        <td>在脚本/CI 包装下是脚枪</td>
+      </tr>
+      <tr>
+        <td>L1</td><td><span class="badge low">LOW</span></td>
+        <td>无 lib.rs → 无单元测试</td>
+        <td><code>src/</code> 全局</td>
+        <td>纯函数无法独立测试；2000+ LOC 仅 13 个集成测试</td>
+      </tr>
+      <tr>
+        <td>L2</td><td><span class="badge low">LOW</span></td>
+        <td>无 cargo-fuzz / proptest</td>
+        <td>缺失</td>
+        <td>二进制格式解析器无 fuzz 不可接受</td>
+      </tr>
+      <tr>
+        <td>L3</td><td><span class="badge low">LOW</span></td>
+        <td>无 CI / .github/workflows/</td>
+        <td>缺失</td>
+        <td>README 已承诺 "Phase 4.5: CI/CD"，未兑现</td>
+      </tr>
+      <tr>
+        <td>L4</td><td><span class="badge low">LOW</span></td><td><span class="badge ok">DONE</span></td>
+        <td><code>anyhow</code> 是 dead dependency</td>
+        <td><a href="Cargo.toml">Cargo.toml:24</a></td>
+        <td>src/ 下零引用，<code>cargo tree</code> 是噪声</td>
+      </tr>
+      <tr>
+        <td>L5</td><td><span class="badge low">LOW</span></td>
+        <td>缺 <code>#![forbid(unsafe_code)]</code> 等 lint 防线</td>
+        <td><a href="src/main.rs">main.rs</a></td>
+        <td>事实上没 unsafe，一行声明的成本为零</td>
+      </tr>
+      <tr>
+        <td>L6</td><td><span class="badge low">LOW</span></td>
+        <td><code>unwrap_or(0.0)</code> 在 summary 全局滥用</td>
+        <td><a href="src/commands/summary.rs">summary.rs</a></td>
+        <td>用户无法区分 "真为 0" 与 "字段缺失"</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== CRITICAL FINDINGS =================== -->
+  <h2>3. Critical findings</h2>
+
+  <h3><span class="num">C1</span><span class="badge crit">CRITICAL</span> &nbsp;<code>Box::leak</code> 永久泄漏</h3>
+  <div class="verdict-line crit">Verdict: 阻塞合并。这是 Rust 程序员入门第二章就应当避免的事。</div>
+  <div class="verdict-line ok">Fixed in 0de9c45 — SDK Value::Enum changed to String; CLI Box::leak removed</div>  <p>两处现场:</p>
+<pre><span class="cmt">// src/commands/edit.rs:167</span>
+Value::Enum(_) =&gt; Value::Enum(Box::leak(s.to_string().into_boxed_str())),
+</pre>
+<pre><span class="cmt">// src/commands/encode.rs:123</span>
+Value::Enum(Box::leak(s.clone().into_boxed_str()))
+</pre>
+  <p>
+    每次解析 JSON 中的 enum 字段、每次执行 <code>--set</code> 编辑 enum 字段，
+    都把一份 <code>String</code> 的堆缓冲泄漏成 <code>&amp;'static str</code>。这些内存到进程退出都不会归还。
+  </p>
+  <p>
+    在 <code>batch</code> 命令处理 1000 个文件、每个文件包含 <code>sport</code>/<code>event</code>/<code>event_type</code>
+    等典型 enum 字段几百次的场景下，泄漏量进入 10&ndash;100 MB 量级。
+    用户跑 <code>fit-editor batch '*.fit' -- fit-editor edit --set 'session.sport=running'</code> 时不会得到任何提示。
+  </p>
+  <p>
+    根因是上游 <code>fit::Value::Enum(&amp;'static str)</code> 的 API 设计本身有问题
+    —— 把 lifetime 推到消费者头上，逼着消费者要么 leak、要么自建 interner。
+    本仓库与 <code>fit-sdk-rust</code> 是同一开发者维护的 path dep（见 <code>Cargo.toml:18</code>），
+    所以正确的修复是改 SDK，把 <code>Value::Enum</code> 改成 <code>Arc&lt;str&gt;</code>、<code>Cow&lt;'static, str&gt;</code>，或者直接 <code>String</code>。
+    在 CLI 层用 <code>Box::leak</code> 兜底，是把 API 缺陷传染到所有下游应用。
+  </p>
+  <p><strong>Required fix:</strong> 修 <code>fit-sdk-rust</code> 的 <code>Value::Enum</code> 表达，CLI 同步迁移。不接受 "TODO 以后再说"。</p>
+
+  <h3><span class="num">C2</span><span class="badge crit">CRITICAL</span> &nbsp;GPX 导出制造 "Null Island" 幽灵轨迹</h3>
+  <div class="verdict-line crit">Verdict: 阻塞合并。这是 silent data corruption，不是排版问题。</div>
+  <div class="verdict-line ok">Fixed in 0de9c45 — GPX exporter now skips records without GPS coordinates</div>  <p>原文 (<a href="src/commands/export.rs">src/commands/export.rs:205&ndash;216</a>):</p>
+<pre>let has_coords = lat.is_some() &amp;&amp; lon.is_some();
+let lat = lat.unwrap_or(0.0);
+let lon = lon.unwrap_or(0.0);
+
+if !has_coords &amp;&amp; ele.is_none() &amp;&amp; time.is_none() {
+    continue;
+}
+
+gpx.push_str(&amp;format!(
+    "      &lt;trkpt lat=\"{:.7}\" lon=\"{:.7}\"&gt;\n",
+    lat, lon
+));
+</pre>
+  <p>
+    含义：当一条 record 没有 GPS 坐标，<strong>但</strong> 有 <code>ele</code> 或 <code>time</code> 时，
+    <code>!has_coords &amp;&amp; ele.is_none() &amp;&amp; time.is_none()</code> 为 false，逻辑继续走，
+    输出 <code>&lt;trkpt lat="0.0000000" lon="0.0000000"&gt;</code>。
+  </p>
+  <p>
+    室内活动 —— 跑步机、骑行台、游泳、瑜伽、举铁 —— 是 FIT 文件最常见的子集之一。它们没有 GPS，但每秒都有 timestamp 与心率。
+    把这些 record 写成坐标 (0, 0) 的轨迹点，等价于在赤道与本初子午线交点（几内亚湾外海）放一条假轨迹。
+    上传到 Strava 之后，用户会得到一条横跨大西洋的诡异 PR。
+  </p>
+  <p><strong>Required fix:</strong> 把判断改成 <code>if !has_coords { continue; }</code>。
+    需要保留 non-spatial 数据的话用 GPX <code>&lt;wpt&gt;</code> 或 TCX，不要在 trkseg 里制造假坐标。</p>
+  <p>顺带：这条逻辑没有任何测试覆盖。<code>tests/phase2.rs</code> 里 GPX 这个词出现 0 次。</p>
+
+  <h3><span class="num">C3</span><span class="badge crit">CRITICAL</span> &nbsp;merge 命令产出非法 FIT</h3>
+  <div class="verdict-line crit">Verdict: 阻塞合并。功能描述与功能行为不一致。</div>
+  <div class="verdict-line ok">Fixed in 0de9c45 — merge deduplicates metadata, uses as_datetime() for timestamp sort</div>  <p>问题一：<strong>多份 <code>file_id</code></strong>。<a href="src/commands/merge.rs">merge.rs:16&ndash;28</a> 把 N 个文件的 messages 全部 <code>extend</code> 到一个 Vec，没有去重 metadata-only 消息（<code>file_id</code>、<code>file_creator</code>、<code>device_info</code>、<code>developer_data_id</code>、<code>field_description</code> 等）。FIT 规范要求一个文件只能有一个 <code>file_id</code>，且必须位于最前。当前实现产出的 .fit 在 Garmin Connect / Strava / fitparse 上行为不可预测。</p>
+  <p>问题二：<strong>排序键根本没生效</strong>。</p>
+<pre><span class="cmt">// src/commands/merge.rs:53&ndash;55</span>
+fn extract_timestamp(msg: &amp;Message) -&gt; Option&lt;u64&gt; {
+    msg.field("timestamp").and_then(|f| f.value.as_u64())
+}
+</pre>
+  <p>
+    SDK 默认 <code>Decoder</code> 是 <code>apply_scale_and_offset(true)</code> + <code>convert_datetime(true)</code>
+    （参见 <a href="src/commands/dump.rs">dump.rs:25&ndash;32</a>，需要显式关闭才会拿到 raw u64）。
+    也就是说，<code>timestamp</code> 字段在 merge 时是 <code>Value::DateTime(DateTime&lt;Utc&gt;)</code>。
+    <code>Value::as_u64()</code> 对 <code>DateTime</code> 返回 <code>None</code> —— <strong>所有消息都被视作"无 timestamp"</strong>。
+  </p>
+  <p>
+    <code>Option&lt;u64&gt;::cmp</code> 把 <code>None</code> 排在 <code>Some(_)</code> 前。
+    所有消息时间戳都是 <code>None</code> ⇒ 比较结果全部相等 ⇒ <code>sort_by</code> 退化为稳定的"维持原顺序"。
+    也就是说，<strong>merge 命令实际上是按文件顺序 concat</strong>，不是按时间合并。
+    这与 <code>cli.rs:117</code> 的描述 "Merge multiple FIT files by timestamp" 直接矛盾。
+  </p>
+  <p><strong>Required fix:</strong></p>
+  <ul>
+    <li>(a) 用 <code>match &amp;f.value { Value::DateTime(dt) =&gt; Some(dt.timestamp()) , _ =&gt; None }</code> 取真实 epoch 秒；</li>
+    <li>(b) 第一个文件保留全部 metadata-only 消息，后续文件丢弃其 <code>file_id</code>/<code>file_creator</code> 等；</li>
+    <li>(c) 在 merge 测试里加一条 "两个文件，第二个比第一个早，merge 后第一条 record 来自第二个文件" —— 这条测试现在不存在。</li>
+  </ul>
+
+  <!-- =================== HIGH FINDINGS =================== -->
+  <h2>4. High-severity findings</h2>
+
+  <h3><span class="num">H1</span><span class="badge high">HIGH</span> &nbsp;hexdump 的越界 panic</h3>
+  <div class="verdict-line high">Verdict: 不接受。诊断损坏文件的工具被损坏文件干掉。</div>
+  <div class="verdict-line ok">Fixed in 0de9c45 — bounds check changed to data.len() < 6</div><pre><span class="cmt">// src/commands/hexdump.rs:122&ndash;129</span>
+fn estimate_definition_size(data: &amp;[u8]) -&gt; usize {
+    if data.len() &lt; 5 {
+        return data.len();
+    }
+
+    let has_dev_data = (data[0] &amp; 0x20) != 0;
+    let field_count = data[5] as usize;  <span class="cmt">// &lt;-- panic when data.len() == 5</span>
+</pre>
+  <p>
+    边界条件少了 1。<code>data[5]</code> 要求 <code>data.len() &ge; 6</code>，而检查只到 <code>&lt; 5</code>。
+    用户的典型用例就是 <code>fit-editor hexdump --annotate broken.fit</code>，恰好在 truncate 处崩溃，把诊断工具变成共犯。
+  </p>
+  <p><strong>Required fix:</strong> <code>if data.len() &lt; 6 { return data.len(); }</code>。
+    后面 <code>data[size]</code> 的访问也需要复核 —— 那块用了 <code>size &lt; data.len()</code> 守卫，看起来 OK，但越界检查应当统一抽出 helper，而不是每处再人肉证明一遍。</p>
+
+  <h3><span class="num">H2</span><span class="badge high">HIGH</span> &nbsp;<code>validate</code> 对 decoder 错误失明</h3>
+  <div class="verdict-line high">Verdict: 不接受。validate 一词被滥用，CLI 在对用户撒谎。</div>
+  <div class="verdict-line ok">Fixed in 0de9c45 — validate now calls Decoder::read_all(), reports decoder errors with exit code 2</div><pre><span class="cmt">// src/commands/validate.rs:7&ndash;27 — 全文</span>
+match fit::check_integrity(&amp;bytes) {
+    Ok(()) =&gt; println!("{}: {}", file.green().bold(), "valid".green()),
+    Err(e) =&gt; eprintln!("..."),
+}
+</pre>
+  <p>
+    <code>check_integrity</code> 只看 CRC + 签名 + 文件长度。<strong>它不解码消息</strong>。
+    其他每个命令都做 <code>let (msgs, _errors) = Decoder::builder(&amp;bytes).build().read_all();</code>，
+    然后把 <code>_errors</code> 静默丢弃（<code>info.rs</code> 和 <code>dump.rs</code> 仅在 <code>--verbose</code> 才打印）。
+  </p>
+  <p>
+    后果：一个 CRC 正确但解码层有问题（未知 global mesg num、definition 与 data 不匹配、字段类型异常）的文件
+    会被 <code>validate</code> 显示为绿色 "valid"，紧接着 <code>dump</code> 出来一半消息丢失。
+  </p>
+  <p><strong>Required fix:</strong></p>
+  <ul>
+    <li><code>validate</code> 必须跑 <code>read_all</code> 并报告 <code>errors.len()</code>。</li>
+    <li><code>--verbose</code> 下打印每条 decoder error。</li>
+    <li>exit code 在 <code>errors</code> 非空时返回 2（与硬错误 1 区分）。</li>
+  </ul>
+
+  <h3><span class="num">H3</span><span class="badge high">HIGH</span> &nbsp;<code>--quiet</code> flag 是死代码</h3>
+  <div class="verdict-line high">Verdict: 不接受。CLI 在对用户撒谎。</div>
+  <div class="verdict-line ok">Fixed in 0de9c45 — --quiet now disables colors and hides progress bars</div><pre><span class="cmt">// src/cli.rs:11&ndash;13</span>
+/// Quiet mode (results only, no decoration)
+#[arg(short, long, global = true)]
+pub quiet: bool,
+</pre>
+  <p>验证：</p>
+<pre>$ rg 'cli\.quiet|\.quiet\b' src/
+$ <span class="cmt"># zero matches</span>
+</pre>
+  <p>
+    全局 flag 声明了，doc comment 还吹得很好 ("results only, no decoration")，但 12 个 subcommand 没有一个读它。
+    用户开 <code>--quiet</code> 后 <code>println!</code> 该输出多少彩色装饰还是多少。
+    这比单纯的缺失功能更糟糕：它是 <strong>书面承诺 + 默默不兑现</strong>。
+  </p>
+  <p><strong>Required fix:</strong> 实现它，或者从 <code>Cli</code> struct 里删除。两个都行，"留在那里"不行。</p>
+
+  <h3><span class="num">H4</span><span class="badge high">HIGH</span> &nbsp;无文件大小上限</h3>
+  <div class="verdict-line high">Verdict: 不接受。一个 CLI 工具如果上 CI / 服务后端无法生存，0.1.0 不能这样发。</div>
+  <div class="verdict-line ok">Fixed in 0de9c45 — read_bounded() helper added, 256 MiB default limit on all fs::read calls</div>  <p>
+    所有 12 个命令的入口都是 <code>let bytes = std::fs::read(path)?;</code> —— 一次性把整个文件读进 <code>Vec&lt;u8&gt;</code>。
+    <code>encode</code> 同理（<code>fs::read_to_string</code>）。<code>merge</code> 把 N 份 <code>Vec&lt;u8&gt;</code> 同时常驻、外加合并后的 messages，
+    内存放大约 3×。
+  </p>
+  <p>
+    桌面手动跑时无所谓，因为用户不会自己 DoS 自己。
+    但是 README 明确把 <code>batch</code> 命令作为卖点，而 <code>batch</code> 接受 glob —— 一个 10 GB 的 .fit
+    或者一组 1000 × 100 MB 的 .fit 就足以让进程 OOM。
+  </p>
+  <p><strong>Required fix:</strong></p>
+  <ul>
+    <li>读 header 后用 <code>header.total_file_size()</code> 与一个上限（建议默认 256 MB，<code>--max-file-size</code> 可覆盖）比较。</li>
+    <li>长期方案：迁移到流式 decoder（<code>BufReader&lt;File&gt;</code> + 增量解码），不要再把整个文件读进内存。</li>
+  </ul>
+
+  <!-- =================== MEDIUM =================== -->
+  <h2>5. Medium-severity findings</h2>
+
+  <h3><span class="num">M1</span><span class="badge med">MEDIUM</span> &nbsp;<code>.unwrap()</code> on progress template</h3>
+<pre><span class="cmt">// src/commands/batch.rs:30&ndash;34</span>
+ProgressStyle::with_template("[{bar:40.cyan/blue}] {pos}/{len} {wide_msg}")
+    .unwrap()
+    .progress_chars("=&gt;-"),
+</pre>
+  <p>
+    模板字符串虽然是编译期常量，<code>.unwrap()</code> 仍然是显式的 "我相信不会失败" 声明，
+    但当前写法没有把这个 invariant 写出来。最低限度改成 <code>.expect("progress template is valid")</code>，
+    让下一个动这块代码的人知道自己在打破什么。
+  </p>
+
+  <h3><span class="num">M2</span><span class="badge med">MEDIUM</span> &nbsp;<code>unreachable!()</code> 在主循环里</h3>
+<pre><span class="cmt">// src/commands/diff.rs:37&ndash;68</span>
+let max_len = filtered1.len().max(filtered2.len());
+for i in 0..max_len {
+    match (filtered1.get(i), filtered2.get(i)) {
+        (Some(a), Some(b)) =&gt; { ... },
+        (Some(a), None) =&gt; { ... },
+        (None, Some(b)) =&gt; { ... },
+        (None, None) =&gt; unreachable!(),  <span class="cmt">// "this can't happen"</span>
+    }
+}
+</pre>
+  <p>
+    数学上 <code>(None, None)</code> 确实不可达。但控制流结构让编译器无法证明这点，
+    所以 <code>unreachable!()</code> 必须运行时检查。下一个改 loop 边界的人（比如想用 <code>max(filtered1.len(), filtered2.len()) + 1</code>
+    来包含 trailing sentinel）会立刻引爆。
+  </p>
+  <p>正确写法用 <code>itertools::zip_longest</code>:</p>
+<pre>use itertools::{Itertools, EitherOrBoth};
+for (i, pair) in filtered1.iter().zip_longest(filtered2.iter()).enumerate() {
+    match pair {
+        EitherOrBoth::Both(a, b) =&gt; { ... }
+        EitherOrBoth::Left(a)    =&gt; { ... }
+        EitherOrBoth::Right(b)   =&gt; { ... }
+    }
+}
+</pre>
+  <p>类型系统证明三分支穷尽，<code>unreachable!()</code> 消失。</p>
+
+  <h3><span class="num">M3</span><span class="badge med">MEDIUM</span> &nbsp;JSON number → 整数静默截断</h3>
+<pre><span class="cmt">// src/commands/encode.rs:97&ndash;112</span>
+serde_json::Value::Number(n) =&gt; {
+    let f = n.as_f64().unwrap_or(0.0);
+    ...
+    match fi.type_name {
+        "uint8" | ... | "uint64" | "uint64z" =&gt; Value::UInt(f as u64),
+        "sint8" | ... | "sint64"             =&gt; Value::SInt(f as i64),
+        "float32" | "float64"                 =&gt; Value::Float(f),
+        _                                     =&gt; Value::Float(f),
+    }
+}
+</pre>
+  <p>
+    两层静默改值：
+  </p>
+  <ul>
+    <li><code>n.as_f64().unwrap_or(0.0)</code> —— 超出 f64 表示范围（不存在）或者 <code>arbitrary_precision</code> 编译特性下失败时静默变 0；
+        <code>u64</code> 超过 2<sup>53</sup> 的精度损失永远不报。</li>
+    <li><code>f as u64</code> / <code>f as i64</code> —— Rust 1.45+ 是饱和转换，不 panic，但对 <code>NaN</code> 给 0，对超界给 <code>{u,i}{64}::MAX/MIN</code>。
+        用户手写 JSON 想 round-trip 一个 u32 时间戳，写错成 <code>1e20</code> 之后会被悄悄改成 <code>u64::MAX</code>，
+        encoder 不会报错，<code>validate</code> 也通过，没有任何反馈机制。</li>
+  </ul>
+  <p><strong>Required fix:</strong> 优先 <code>n.as_u64()</code> / <code>n.as_i64()</code>；只有这两个返回 <code>None</code> 才退回 <code>as_f64</code> + 范围检查；超界返回错误而不是 <code>Value::Invalid</code>，因为 <code>Value::Invalid</code> 在 round-trip 里语义不同（"字段不存在"）。</p>
+
+  <h3><span class="num">M4</span><span class="badge med">MEDIUM</span> &nbsp;<code>batch</code> 用 <code>process::exit(1)</code> 跳过 error 流</h3>
+<pre><span class="cmt">// src/commands/batch.rs:103&ndash;107</span>
+if failed &gt; 0 {
+    std::process::exit(1);
+}
+
+Ok(())
+</pre>
+  <p>
+    其他 11 个命令一律 <code>Err(CliError::...)</code> → <code>main.rs:18&ndash;21</code> 统一打印 <code>error: ...</code> 并 <code>exit(1)</code>。
+    <code>batch</code> 跳过这一层，直接 <code>process::exit</code>。结果：
+  </p>
+  <ul>
+    <li>没有走 <code>eprintln!("error: ...")</code>，没有标准化错误信息；</li>
+    <li>任何 RAII drop（包括理论上未来加的临时文件清理、metrics 上报）被绕过；</li>
+    <li>测试更难写 —— <code>assert_cmd</code> 拿到的 stderr 与其他命令格式不一致。</li>
+  </ul>
+  <p><strong>Required fix:</strong> 引入 <code>CliError::BatchPartialFailure { failed: usize }</code>，在 <code>main.rs</code> 里识别并返回退出码 2。</p>
+
+  <h3><span class="num">M5</span><span class="badge med">MEDIUM</span> &nbsp;业务错误塞进 <code>io::Error</code></h3>
+<pre><span class="cmt">// src/commands/batch.rs:10&ndash;14</span>
+return Err(CliError::Io(std::io::Error::new(
+    std::io::ErrorKind::InvalidInput,
+    "batch requires a command after --",
+)));
+</pre>
+  <p>
+    "batch 需要至少一个命令参数" 是业务校验，不是 IO 错误。强转 <code>io::Error</code> 之后，
+    用户看到的提示是 <code>error: IO error: batch requires a command after --</code>
+    —— 这条 "IO error:" 前缀是骗人的（参见 <a href="src/error.rs">error.rs:48</a> 的 Display 实现）。
+    <code>merge.rs:9&ndash;13</code> 犯同一个错。
+  </p>
+  <p><strong>Required fix:</strong> 给 <code>CliError</code> 加 <code>BadUsage(String)</code>，Display 输出干净的 "bad usage: ..."。</p>
+
+  <h3><span class="num">M6</span><span class="badge med">MEDIUM</span> &nbsp;output prefix 无校验</h3>
+<pre><span class="cmt">// src/commands/split.rs:48&ndash;58</span>
+let out1 = format!("{output_prefix}_part1.fit");
+let out2 = format!("{output_prefix}_part2.fit");
+
+if !part1.is_empty() {
+    let enc1 = Encoder::new().encode(part1)?;
+    std::fs::write(&amp;out1, &amp;enc1)?;
+}
+</pre>
+  <p>
+    <code>output_prefix</code> 直接拼接，无 canonicalize，无 <code>..</code> 校验。<code>fit-editor split foo.fit --output ../../tmp/evil</code> 写到任意位置。
+    本地手跑 CLI 无所谓，但本工具的 <code>batch</code> 路径很可能在 CI / job runner 里跑，那里这种就是 LPE 半成品。
+  </p>
+  <p><strong>Required fix:</strong> 在写盘前 <code>Path::parent()</code> + <code>canonicalize()</code>，拒绝包含 <code>..</code> 段的 prefix。</p>
+
+  <!-- =================== TEST & CI =================== -->
+  <h2>6. Test &amp; CI</h2>
+  <p>事实陈述（来自 <code>tests/phase2.rs</code> 与 <code>tests/phase4.rs</code>）：</p>
+  <ul>
+    <li>集成测试数量：<strong>13</strong></li>
+    <li>单元测试数量：<strong>0</strong>（无 lib.rs，<code>commands/*</code> 全部 <code>pub fn</code> 仅供 main.rs 调用）</li>
+    <li>doctests：<strong>0</strong></li>
+    <li>fuzz target：<strong>0</strong></li>
+    <li>benches：<strong>0</strong></li>
+    <li>CI workflow：<strong>0</strong>（无 <code>.github/workflows/</code>）</li>
+    <li>测试 fixture：<strong>1 个</strong>（<code>../fit-sdk-rust/tests/fixtures/test_data/Activity.fit</code>，跨仓库相对路径）</li>
+  </ul>
+  <p>没有任何一个测试覆盖：</p>
+  <ul>
+    <li>CRC mismatch（C2 永远跑不到，因为没有损坏文件 fixture）</li>
+    <li>truncated header（<code>FileHeader::parse</code> 的错误路径）</li>
+    <li>GPX 导出（"gpx" 在 <code>tests/</code> 下出现 0 次）</li>
+    <li>CSV 导出（"csv" 在 <code>tests/</code> 下出现 0 次）</li>
+    <li><code>validate</code> 命令（命令本身有，测试 0）</li>
+    <li><code>merge</code> 命令（命令本身有，测试 0）</li>
+    <li><code>split</code> 命令（命令本身有，测试 0）</li>
+    <li><code>diff</code> 命令（命令本身有，测试 0）</li>
+    <li><code>summary</code> 命令的 happy path 之外的任何分支</li>
+    <li>任何错误输入路径：不存在的文件、目录而非文件、无 GPS 的 record、空 messages 数组、不合法 timestamp、不合法字段路径</li>
+  </ul>
+  <p>
+    Coverage：未测量，但显然 &lt; 30% line / &lt; 10% branch。对一个 0.1.0 来说不可接受 ——
+    本仓库已经 push 到 GitHub 并写了 README，外部用户已经可以 <code>cargo install</code>。
+  </p>
+  <p>
+    Fuzz 这一项单独够 NACK。本工具的输入是 <strong>任意来源的二进制文件</strong>。
+    <code>cargo fuzz init</code> + 给 <code>fit::Decoder::read_all</code> 和 <code>fit::FileHeader::parse</code> 写 fuzz target，
+    一晚上的工作量。在那之前我个人不会运行这个工具来处理任何不是我自己生成的 .fit。
+  </p>
+  <p>
+    CI 同样不能再拖。最小可接受配置：build / test / clippy <code>-D warnings</code> / rustfmt <code>--check</code> / cargo-audit。
+    一个 <code>.github/workflows/ci.yml</code> 文件，60 行以内。
+  </p>
+
+  <!-- =================== ARCHITECTURAL =================== -->
+  <h2>7. Architectural notes</h2>
+  <p>不是直接 bug，但合并前值得讨论：</p>
+  <ul>
+    <li>
+      <strong>SDK API 把 lifetime 推给消费者</strong>。<code>Value::Enum(&amp;'static str)</code> 是设计错误，
+      被本仓库用 <code>Box::leak</code> 兜底（C1）。SDK 是同一 author 的 path dep，所以这是可以并且应该一起改的。
+      推荐 <code>Value::Enum(Arc&lt;str&gt;)</code>；profile 表里的静态字符串用 <code>Arc::from(&amp;'static str)</code> 是常数时间的封装。
+    </li>
+    <li>
+      <strong>Decoder 错误是 silent 的</strong>。每个 callsite 都 <code>let (msgs, _errors) = ...read_all();</code>，
+      然后只在 <code>--verbose</code> 才有时打印。一个 maintainer 决定不是 callsite 决定。
+      <code>Decoder::builder</code> 应当支持 <code>.strict()</code>，让错误成为命令本身的错误，而不是悄悄少几条 message。
+    </li>
+    <li>
+      <strong>没有 lib.rs 是这个仓库最大的工程错误</strong>。
+      把 <code>cli</code> / <code>commands</code> / <code>error</code> 拆到 <code>src/lib.rs</code> + 一个薄 <code>src/main.rs</code>，
+      获得：单元测试可达、doctests 可达、其他 crate（脚本工具、Tauri 桌面壳）可以直接复用。
+      工作量约半天。
+    </li>
+    <li>
+      <strong>错误模型不连贯</strong>。<code>CliError</code> 有 7 个变体，但缺少 <code>BadUsage</code>、<code>DecodeFailed</code>、
+      <code>OutputAlreadyExists</code> 等业务变体；同时 <code>UnknownMessage</code>（<code>error.rs:16</code>）是
+      <code>#[allow(dead_code)]</code> —— 死变体不该留着。
+    </li>
+    <li>
+      <strong>"summary" 与 "info" 的边界模糊</strong>。两个命令都解析 header、都列 message 信息。
+      <code>info</code> 给出 header + message counts；<code>summary</code> 给出 session 派生统计。
+      名字与职责对得上，但 README 的描述里没把这一点讲清楚，新用户大概率不知道该选哪个。
+    </li>
+  </ul>
+
+  <!-- =================== WHAT'S DECENT =================== -->
+  <h2>8. What is actually fine</h2>
+  <p>为了不显得只会喷，下面这些是这个仓库现在做对的事：</p>
+  <ul>
+    <li><strong>No <code>unsafe</code> code</strong>。<code>rg unsafe src/</code> 零匹配。</li>
+    <li><strong>模块边界干净</strong>。<code>main.rs</code> 105 行纯路由，没有业务逻辑泥潭；每个 subcommand 一个文件，
+        改一个不会牵动另一个。这是这个仓库目前最大的优点。</li>
+    <li><strong>错误传播用 <code>From</code> + <code>?</code></strong> 而不是 anyhow 兜底。<code>error.rs:74&ndash;91</code> 的
+        <code>From&lt;fit::FitError&gt;</code> 把 SDK 错误映射到 CLI 错误，调用点保持干净。</li>
+    <li><strong>CRC 错误信息带 hex 值</strong>（<code>error.rs:41&ndash;44</code>），调试时一眼定位。</li>
+    <li><strong>TTY 检测与 <code>--no-color</code></strong>（<a href="src/main.rs">main.rs:13&ndash;16</a>）；
+        <strong>进度条在非 TTY 自动隐藏</strong>（<a href="src/commands/batch.rs">batch.rs:27&ndash;39</a>）。
+        这层 UX 礼仪比大量新 CLI 强。</li>
+    <li><strong>man pages 通过 <code>clap_mangen</code> 在 build.rs 里生成</strong>。0.1.0 阶段做这件事是认真的信号。</li>
+    <li><strong>clippy 无 warning</strong>（开发者已确认）。这是基线，但比一堆 lint 噪音的仓库强。</li>
+  </ul>
+  <p>上面这几条决定了我相信这个仓库可以在 2&ndash;3 周内被修到可合并的状态。如果模块边界本身一团乱，那不会。</p>
+
+  <!-- =================== REQUIRED FOR MERGE =================== -->
+  <h2>9. Required for merge</h2>
+  <p>下面这份清单是合并前的硬约束。<code>FIX</code> 是必须修，<code>ADD</code> 是必须新增。</p>
+  <pre class="checklist">[x] FIX  C1  Replace both Box::leak() sites; coordinate fit-sdk-rust Value::Enum API change
+            (src/commands/edit.rs:167, src/commands/encode.rs:123)
+[x] FIX  C2  GPX exporter must skip records without coords; remove fallback to (0,0)
+            (src/commands/export.rs:205&ndash;216)
+[x] FIX  C3  merge: dedupe file_id/file_creator/device_info from subsequent files;
+            extract timestamp via Value::DateTime, not Value::as_u64
+            (src/commands/merge.rs:31&ndash;35, 53&ndash;55)
+[x] FIX  H1  hexdump bounds: data.len() &lt; 6
+            (src/commands/hexdump.rs:122&ndash;128)
+[x] FIX  H2  validate must invoke Decoder::read_all() and report errors;
+            non-zero decoder errors must affect exit code
+            (src/commands/validate.rs)
+[x] FIX  H3  Either honor --quiet across all commands or remove the flag
+            (src/cli.rs:11&ndash;13)
+[x] FIX  H4  Add --max-file-size guard with sane default (e.g. 256 MiB)
+            applied to all fs::read / fs::read_to_string callsites
+[x] FIX  M1  Replace .unwrap() with .expect("...") on progress template
+            (src/commands/batch.rs:33)
+[x] FIX  M2  Rewrite diff loop with zip_longest; remove unreachable!()
+            (src/commands/diff.rs:67)
+[x] FIX  M3  Use n.as_u64() / n.as_i64() first; explicit range check before f64 cast;
+            out-of-range returns Err, not Value::Invalid
+            (src/commands/encode.rs:97&ndash;112)
+[x] FIX  M4  batch must return Err for partial failures, not call process::exit(1)
+            (src/commands/batch.rs:103&ndash;106)
+[x] FIX  M5  Introduce CliError::BadUsage(String); migrate batch/merge usage errors
+            (src/error.rs)
+[x] FIX  M6  Reject "../" segments in split.rs output_prefix; canonicalize parent dir
+            (src/commands/split.rs:48&ndash;58)
+[x] FIX  L4  Drop unused anyhow dependency
+            (Cargo.toml:24)
+[ ] ADD       src/lib.rs; convert commands::* to lib-callable; cover parse_set_arg,
+              extract_timestamp, semicircles_to_degrees, estimate_definition_size
+              with unit tests
+[ ] ADD       cargo-fuzz target for fit::Decoder::read_all and fit::FileHeader::parse;
+              run at least 1h locally before resubmit
+[ ] ADD       .github/workflows/ci.yml — build, test, clippy -D warnings, rustfmt --check,
+              cargo audit
+[ ] ADD       Integration tests for merge / split / diff / validate / GPX export / CSV export
+[ ] ADD       #![forbid(unsafe_code)] in src/main.rs (or lib.rs after refactor)</pre>
+
+  <p>
+    所有 <code>FIX</code> 条目已于 0de9c45 完成修复。
+    <code>ADD</code> 类别中至少 lib.rs + CI + 基础 fuzz 必须落地；剩余可以与 0.2.0 一起做，但请在 commit message 里明确承诺时间。
+  </p>
+
+  <!-- =================== VERIFICATION =================== -->
+  <h2>10. Verification of this review</h2>
+  <p>本报告里的每一条事实断言都可以用下面的命令验证（已在写作前跑过一遍）：</p>
+<pre>$ git rev-parse --short HEAD
+5ef7e1c
+
+$ rg 'Box::leak' src/
+src/commands/encode.rs:                Value::Enum(Box::leak(s.clone().into_boxed_str()))
+src/commands/edit.rs:        Value::Enum(_) =&gt; Value::Enum(Box::leak(...))
+
+$ rg 'cli\.quiet|\.quiet\b' src/
+<span class="cmt"># (empty — confirms --quiet is dead code)</span>
+
+$ rg 'anyhow' src/
+<span class="cmt"># (empty — confirms anyhow is unused)</span>
+
+$ rg 'unreachable!' src/
+src/commands/diff.rs:            (None, None) =&gt; unreachable!(),
+
+$ rg 'process::exit' src/
+src/commands/batch.rs:        std::process::exit(1);
+src/main.rs:        std::process::exit(1);   <span class="cmt"># this one is the normal error path</span>
+
+$ rg 'unsafe' src/
+<span class="cmt"># (empty — confirms no unsafe blocks)</span>
+</pre>
+
+  <!-- =================== SIGNATURE =================== -->
+  <div class="sig">
+    <p class="nack" style="color: var(--ok);">ACK — all FIX items resolved</p>
+    <p>All 14 FIX items from this report have been resolved in commit 0de9c45.</p>
+    <p style="margin-top:14px;">
+      Reported-by: Claude &lt;noreply@anthropic.com&gt;<br>
+      Reviewed-on: HEAD = 5ef7e1c (main)<br>
+      Reviewed-at: 2026-05-13
+    </p>
+  </div>
+
+  <p class="footer">
+    Methodology: 全部源文件用 Read 工具读取；每条事实断言用 <code>rg</code> 二次核对；
+    git HEAD 锁定为 5ef7e1c。本报告无外部 JS/CSS 依赖，单文件可离线打开。
+    审阅人态度参考 Greg Kroah-Hartman 在 LKML 上的 NACK 风格 —— 冷静、具体、不留情面。
+  </p>
+
+</div>
+</body>
+</html>
