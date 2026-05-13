@@ -14,7 +14,8 @@
 /fit_source/
 
 # Agent
-.claude
+.claude/*
+!.claude/skills/
 .codex
 .gemini
 
