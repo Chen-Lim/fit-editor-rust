@@ -8,14 +8,13 @@ use crate::error::CliError;
 
 pub fn run(pattern: &str, cmd_args: &[String], stdout_tty: bool) -> Result<(), CliError> {
     if cmd_args.is_empty() {
-        return Err(CliError::Io(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "batch requires a command after --",
-        )));
+        return Err(CliError::BadUsage(
+            "batch requires a command after --".into(),
+        ));
     }
 
     let entries: Vec<_> = glob(pattern)
-        .map_err(|e| CliError::Io(std::io::Error::new(std::io::ErrorKind::InvalidInput, e)))?
+        .map_err(|e| CliError::BadUsage(format!("invalid glob pattern: {e}")))?
         .filter_map(Result::ok)
         .collect();
 
@@ -30,7 +29,7 @@ pub fn run(pattern: &str, cmd_args: &[String], stdout_tty: bool) -> Result<(), C
             ProgressStyle::with_template(
                 "[{bar:40.cyan/blue}] {pos}/{len} {wide_msg}",
             )
-            .unwrap()
+            .expect("valid progress bar template")
             .progress_chars("=>-"),
         );
         b
@@ -101,7 +100,7 @@ pub fn run(pattern: &str, cmd_args: &[String], stdout_tty: bool) -> Result<(), C
     );
 
     if failed > 0 {
-        std::process::exit(1);
+        return Err(CliError::BatchPartialFailure { succeeded, failed });
     }
 
     Ok(())

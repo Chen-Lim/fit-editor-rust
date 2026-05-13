@@ -3,7 +3,7 @@ use std::path::Path;
 use colored::Colorize;
 use fit::{Decoder, Message, Value};
 
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 pub fn run(
     file: &str,
@@ -15,7 +15,7 @@ pub fn run(
     verbose: bool,
 ) -> Result<(), CliError> {
     let path = Path::new(file);
-    let bytes = std::fs::read(path)?;
+    let bytes = read_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
 
     if !fit::is_fit(&bytes) {
         return Err(CliError::NotFit(file.to_string()));

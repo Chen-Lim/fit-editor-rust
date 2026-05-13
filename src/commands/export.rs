@@ -7,7 +7,7 @@ use fit::{Decoder, FieldKind, Message, Value};
 use serde::Serialize;
 
 use crate::cli::ExportFormat;
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 #[derive(Serialize)]
 struct ExportFile {
@@ -39,7 +39,7 @@ pub fn run(
     _compact: bool,
 ) -> Result<(), CliError> {
     let path = Path::new(file);
-    let bytes = std::fs::read(path)?;
+    let bytes = read_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
 
     if !fit::is_fit(&bytes) {
         return Err(CliError::NotFit(file.to_string()));
@@ -203,12 +203,11 @@ fn export_gpx(messages: &[Message], output: Option<&str>) -> Result<(), CliError
             });
 
         let has_coords = lat.is_some() && lon.is_some();
-        let lat = lat.unwrap_or(0.0);
-        let lon = lon.unwrap_or(0.0);
-
-        if !has_coords && ele.is_none() && time.is_none() {
+        if !has_coords {
             continue;
         }
+        let lat = lat.unwrap();
+        let lon = lon.unwrap();
 
         gpx.push_str(&format!(
             "      <trkpt lat=\"{:.7}\" lon=\"{:.7}\">\n",

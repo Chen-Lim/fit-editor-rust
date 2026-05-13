@@ -3,7 +3,7 @@ use std::path::Path;
 use colored::Colorize;
 use fit::{Decoder, Encoder, Message, Value};
 
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 pub fn run(
     file: &str,
@@ -12,7 +12,7 @@ pub fn run(
     remove_messages: &[String],
 ) -> Result<(), CliError> {
     let path = Path::new(file);
-    let bytes = std::fs::read(path)?;
+    let bytes = read_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
 
     if !fit::is_fit(&bytes) {
         return Err(CliError::NotFit(file.to_string()));
@@ -164,7 +164,7 @@ fn parse_field_value(s: &str, template: &Value) -> Value {
         Value::SInt(_) => s.parse::<i64>().map(Value::SInt).unwrap_or(Value::Invalid),
         Value::Float(_) => s.parse::<f64>().map(Value::Float).unwrap_or(Value::Invalid),
         Value::Bool(_) => s.parse::<bool>().map(Value::Bool).unwrap_or(Value::Invalid),
-        Value::Enum(_) => Value::Enum(Box::leak(s.to_string().into_boxed_str())),
+        Value::Enum(_) => Value::Enum(s.to_string()),
         Value::DateTime(_) => chrono::DateTime::parse_from_rfc3339(s)
             .map(|dt| Value::DateTime(dt.with_timezone(&chrono::Utc)))
             .unwrap_or(Value::Invalid),

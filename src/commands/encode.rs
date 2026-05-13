@@ -4,11 +4,11 @@ use colored::Colorize;
 use fit::profile::{mesg_info_by_num, MesgNum};
 use fit::{Encoder, Field, FieldKind, Message, Value};
 
-use crate::error::CliError;
+use crate::error::{read_to_string_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 pub fn run(file: &str, output: &str) -> Result<(), CliError> {
     let path = Path::new(file);
-    let json_str = std::fs::read_to_string(path)?;
+    let json_str = read_to_string_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
     let json: serde_json::Value = serde_json::from_str(&json_str)?;
 
     let messages = parse_messages_from_json(&json)?;
@@ -71,7 +71,8 @@ fn json_value_to_message(val: &serde_json::Value) -> Result<Message, String> {
             .field_by_name(key)
             .ok_or_else(|| format!("unknown field '{key}' in message '{msg_type}'"))?;
 
-        let value = json_to_fit_value(fval, field_info);
+        let value = json_to_fit_value(fval, field_info)
+            .map_err(|e| format!("field '{key}': {e}"))?;
 
         fields.push(Field {
             name: key.clone(),
@@ -90,43 +91,56 @@ fn json_value_to_message(val: &serde_json::Value) -> Result<Message, String> {
     })
 }
 
-fn json_to_fit_value(val: &serde_json::Value, fi: &fit::profile::FieldInfo) -> Value {
+fn json_to_fit_value(val: &serde_json::Value, fi: &fit::profile::FieldInfo) -> Result<Value, String> {
     match val {
-        serde_json::Value::Null => Value::Invalid,
-        serde_json::Value::Bool(b) => Value::Bool(*b),
+        serde_json::Value::Null => Ok(Value::Invalid),
+        serde_json::Value::Bool(b) => Ok(Value::Bool(*b)),
         serde_json::Value::Number(n) => {
-            let f = n.as_f64().unwrap_or(0.0);
             // Scaled fields store physical values as Float so the encoder
             // can reverse: raw = (physical + offset) * scale
             let has_scale = fi.scale.is_some_and(|s| s != 1.0);
             let has_offset = fi.offset.is_some_and(|o| o != 0.0);
             if has_scale || has_offset {
-                return Value::Float(f);
+                let f = n.as_f64().ok_or("expected numeric value for scaled field")?;
+                return Ok(Value::Float(f));
             }
             match fi.type_name {
                 "uint8" | "uint8z" | "uint16" | "uint16z" | "uint32" | "uint32z"
-                | "uint64" | "uint64z" => Value::UInt(f as u64),
-                "sint8" | "sint16" | "sint32" | "sint64" => Value::SInt(f as i64),
-                "float32" | "float64" => Value::Float(f),
-                _ => Value::Float(f),
+                | "uint64" | "uint64z" => {
+                    let v = n.as_u64()
+                        .ok_or_else(|| format!("expected non-negative integer for {}, got {n}", fi.type_name))?;
+                    Ok(Value::UInt(v))
+                }
+                "sint8" | "sint16" | "sint32" | "sint64" => {
+                    let v = n.as_i64()
+                        .ok_or_else(|| format!("expected integer for {}, got {n}", fi.type_name))?;
+                    Ok(Value::SInt(v))
+                }
+                "float32" | "float64" => {
+                    let f = n.as_f64().ok_or("expected numeric value")?;
+                    Ok(Value::Float(f))
+                }
+                _ => {
+                    let f = n.as_f64().ok_or("expected numeric value")?;
+                    Ok(Value::Float(f))
+                }
             }
         }
         serde_json::Value::String(s) => {
             if is_datetime_type(fi.type_name) {
                 if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(s) {
-                    Value::DateTime(dt.with_timezone(&chrono::Utc))
+                    Ok(Value::DateTime(dt.with_timezone(&chrono::Utc)))
                 } else {
-                    Value::String(s.clone())
+                    Ok(Value::String(s.clone()))
                 }
             } else if !is_base_type(fi.type_name) {
-                // Treat as enum name
-                Value::Enum(Box::leak(s.clone().into_boxed_str()))
+                Ok(Value::Enum(s.clone()))
             } else {
-                Value::String(s.clone())
+                Ok(Value::String(s.clone()))
             }
         }
-        serde_json::Value::Array(_) => Value::Invalid,
-        serde_json::Value::Object(_) => Value::Invalid,
+        serde_json::Value::Array(_) => Ok(Value::Invalid),
+        serde_json::Value::Object(_) => Ok(Value::Invalid),
     }
 }
 

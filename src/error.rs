@@ -1,4 +1,34 @@
 use std::fmt;
+use std::path::Path;
+
+/// Default maximum file size: 256 MiB.
+pub const DEFAULT_MAX_FILE_SIZE: u64 = 256 * 1024 * 1024;
+
+/// Read a file into bytes, rejecting files larger than `max_bytes`.
+pub fn read_bounded(path: &Path, max_bytes: u64) -> Result<Vec<u8>, CliError> {
+    let meta = std::fs::metadata(path)?;
+    if meta.len() > max_bytes {
+        return Err(CliError::FileTooLarge {
+            path: path.display().to_string(),
+            size: meta.len(),
+            max: max_bytes,
+        });
+    }
+    Ok(std::fs::read(path)?)
+}
+
+/// Read a file to string, rejecting files larger than `max_bytes`.
+pub fn read_to_string_bounded(path: &Path, max_bytes: u64) -> Result<String, CliError> {
+    let meta = std::fs::metadata(path)?;
+    if meta.len() > max_bytes {
+        return Err(CliError::FileTooLarge {
+            path: path.display().to_string(),
+            size: meta.len(),
+            max: max_bytes,
+        });
+    }
+    Ok(std::fs::read_to_string(path)?)
+}
 
 #[derive(Debug)]
 pub enum CliError {
@@ -12,11 +42,20 @@ pub enum CliError {
         calculated: u16,
         which: &'static str,
     },
-    /// Unknown message type
-    #[allow(dead_code)]
-    UnknownMessage(String),
     /// Invalid field path
     InvalidFieldPath(String),
+    /// Bad usage / invalid arguments
+    BadUsage(String),
+    /// Batch had partial failures
+    BatchPartialFailure { succeeded: usize, failed: usize },
+    /// Decoder reported errors
+    DecodeErrors(usize),
+    /// File exceeds size limit
+    FileTooLarge {
+        path: String,
+        size: u64,
+        max: u64,
+    },
     /// IO error
     Io(std::io::Error),
     /// JSON error
@@ -43,8 +82,20 @@ impl fmt::Display for CliError {
                     "{which} CRC mismatch: stored 0x{stored:04X}, calculated 0x{calculated:04X}"
                 )
             }
-            Self::UnknownMessage(name) => write!(f, "unknown message type: {name}"),
             Self::InvalidFieldPath(path) => write!(f, "invalid field path: {path}"),
+            Self::BadUsage(msg) => write!(f, "bad usage: {msg}"),
+            Self::BatchPartialFailure { succeeded, failed } => {
+                write!(f, "{failed} of {} files failed", succeeded + failed)
+            }
+            Self::DecodeErrors(n) => {
+                write!(f, "decoder reported {n} error(s)")
+            }
+            Self::FileTooLarge { path, size, max } => {
+                write!(
+                    f,
+                    "{path}: file too large ({size} bytes, limit {max} bytes)"
+                )
+            }
             Self::Io(e) => write!(f, "IO error: {e}"),
             Self::Json(e) => write!(f, "JSON error: {e}"),
         }

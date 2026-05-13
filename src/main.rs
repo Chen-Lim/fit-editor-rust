@@ -11,13 +11,18 @@ fn main() {
     let cli = Cli::parse();
 
     let stdout_tty = io::stdout().is_terminal();
-    if cli.no_color || !stdout_tty {
+    if cli.no_color || cli.quiet || !stdout_tty {
         colored::control::set_override(false);
     }
 
     if let Err(e) = run(cli, stdout_tty) {
+        let code = match &e {
+            error::CliError::BatchPartialFailure { .. }
+            | error::CliError::DecodeErrors(_) => 2,
+            _ => 1,
+        };
         eprintln!("error: {e}");
-        std::process::exit(1);
+        std::process::exit(code);
     }
 }
 
@@ -94,7 +99,9 @@ fn run(cli: Cli, stdout_tty: bool) -> Result<(), error::CliError> {
             annotate,
         } => commands::hexdump::run(file, *bytes, *skip_header, *annotate),
 
-        Command::Batch { glob, command } => commands::batch::run(glob, command, stdout_tty),
+        Command::Batch { glob, command } => {
+            commands::batch::run(glob, command, stdout_tty && !cli.quiet)
+        }
 
         Command::Completion { shell } => {
             let mut cmd = Cli::command();

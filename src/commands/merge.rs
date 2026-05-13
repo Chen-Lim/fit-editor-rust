@@ -3,28 +3,46 @@ use std::path::Path;
 use colored::Colorize;
 use fit::{Decoder, Encoder, Message};
 
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
+
+/// Metadata-only message types that should only appear once (from the first file).
+const METADATA_TYPES: &[&str] = &[
+    "file_id",
+    "file_creator",
+    "device_info",
+    "developer_data_id",
+    "field_description",
+];
 
 pub fn run(files: &[String], output: &str) -> Result<(), CliError> {
     if files.len() < 2 {
-        return Err(CliError::Io(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "merge requires at least 2 files",
-        )));
+        return Err(CliError::BadUsage(
+            "merge requires at least 2 files".into(),
+        ));
     }
 
     let mut all_messages: Vec<Message> = Vec::new();
 
-    for file in files {
+    for (i, file) in files.iter().enumerate() {
         let path = Path::new(file);
-        let bytes = std::fs::read(path)?;
+        let bytes = read_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
 
         if !fit::is_fit(&bytes) {
             return Err(CliError::NotFit(file.clone()));
         }
 
         let (messages, _errors) = Decoder::builder(&bytes).build().read_all();
-        all_messages.extend(messages);
+
+        if i > 0 {
+            // Strip metadata-only messages from subsequent files
+            let filtered: Vec<Message> = messages
+                .into_iter()
+                .filter(|m| !METADATA_TYPES.contains(&m.name))
+                .collect();
+            all_messages.extend(filtered);
+        } else {
+            all_messages.extend(messages);
+        }
     }
 
     // Sort by timestamp where available
@@ -51,5 +69,7 @@ pub fn run(files: &[String], output: &str) -> Result<(), CliError> {
 }
 
 fn extract_timestamp(msg: &Message) -> Option<u64> {
-    msg.field("timestamp").and_then(|f| f.value.as_u64())
+    msg.field("timestamp")
+        .and_then(|f| f.value.as_datetime())
+        .map(|dt| dt.timestamp() as u64)
 }

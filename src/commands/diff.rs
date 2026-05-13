@@ -3,7 +3,7 @@ use std::path::Path;
 use colored::Colorize;
 use fit::{Decoder, Message};
 
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 pub fn run(
     file1: &str,
@@ -11,8 +11,8 @@ pub fn run(
     ignore_timestamps: bool,
     message_filter: Option<&str>,
 ) -> Result<(), CliError> {
-    let bytes1 = std::fs::read(Path::new(file1))?;
-    let bytes2 = std::fs::read(Path::new(file2))?;
+    let bytes1 = read_bounded(Path::new(file1), DEFAULT_MAX_FILE_SIZE)?;
+    let bytes2 = read_bounded(Path::new(file2), DEFAULT_MAX_FILE_SIZE)?;
 
     if !fit::is_fit(&bytes1) {
         return Err(CliError::NotFit(file1.to_string()));
@@ -64,7 +64,7 @@ pub fn run(
                 println!("[{}] +++ {} (only in {})", i, b.name.green(), file2);
                 diffs_found += 1;
             }
-            (None, None) => unreachable!(),
+            (None, None) => break,
         }
     }
 

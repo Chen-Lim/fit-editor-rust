@@ -5,11 +5,11 @@ use colored::Colorize;
 use tabled::builder::Builder;
 use tabled::settings::Style;
 
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 pub fn run(file: &str, verbose: bool) -> Result<(), CliError> {
     let path = Path::new(file);
-    let bytes = std::fs::read(path)?;
+    let bytes = read_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
 
     if !fit::is_fit(&bytes) {
         return Err(CliError::NotFit(file.to_string()));

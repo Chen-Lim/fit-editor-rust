@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::path::{Component, Path};
 
 use colored::Colorize;
 use fit::{Decoder, Encoder, Value};
 
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 pub fn run(
     file: &str,
@@ -11,8 +11,18 @@ pub fn run(
     at_timestamp: Option<&str>,
     at_index: Option<usize>,
 ) -> Result<(), CliError> {
+    // Reject path traversal in output prefix
+    if Path::new(output_prefix)
+        .components()
+        .any(|c| c == Component::ParentDir)
+    {
+        return Err(CliError::BadUsage(
+            "output prefix must not contain '..'".into(),
+        ));
+    }
+
     let path = Path::new(file);
-    let bytes = std::fs::read(path)?;
+    let bytes = read_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
 
     if !fit::is_fit(&bytes) {
         return Err(CliError::NotFit(file.to_string()));

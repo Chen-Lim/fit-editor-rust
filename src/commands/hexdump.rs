@@ -2,7 +2,7 @@ use std::path::Path;
 
 use colored::Colorize;
 
-use crate::error::CliError;
+use crate::error::{read_bounded, CliError, DEFAULT_MAX_FILE_SIZE};
 
 pub fn run(
     file: &str,
@@ -11,7 +11,7 @@ pub fn run(
     annotate: bool,
 ) -> Result<(), CliError> {
     let path = Path::new(file);
-    let bytes = std::fs::read(path)?;
+    let bytes = read_bounded(path, DEFAULT_MAX_FILE_SIZE)?;
 
     if !fit::is_fit(&bytes) {
         return Err(CliError::NotFit(file.to_string()));
@@ -120,7 +120,7 @@ fn hexdump_annotated(data: &[u8], offset_base: usize, full_bytes: &[u8]) {
 /// Estimate definition message size from raw bytes.
 /// Record header(1) + reserved(1) + arch(1) + mesg_num(2) + field_count(1) + fields(N*3)
 fn estimate_definition_size(data: &[u8]) -> usize {
-    if data.len() < 5 {
+    if data.len() < 6 {
         return data.len();
     }
 
