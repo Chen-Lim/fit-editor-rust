@@ -12,10 +12,13 @@
 # Project data
 /fit_output/
 /fit_source/
+Report.html
 
 # Agent
 .claude/*
 !.claude/skills/
+!.claude/CLAUDE.md
+!.claude/settings.json
 .codex
 .gemini
 

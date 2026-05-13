@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo *)",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(tree *)",
+      "Bash(diff *)",
+      "Bash(mkdir *)",
+      "Bash(echo *)",
+      "Bash(xxd *)",
+      "Bash(awk *)",
+      "Bash(./target/*/fit-editor *)"
+    ]
+  }
+}
