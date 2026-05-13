@@ -194,3 +194,17 @@ fn crc16_step(crc: u16, byte: u8) -> u16 {
 | 3 | event | enum | | |
 | 5 | local_timestamp | date_time | | |
 | 253 | timestamp | date_time | | |
+
+### 8. fit-editor 必须遵守的格式硬约束
+
+下面这些约束在格式层面是规范要求，但在 [`src/commands/`](../src/commands) 实现中
+**当前未全部遵守**，详见 [Report.html](../Report.html)：
+
+| 约束 | 现状 | 对应 finding |
+|------|------|--------------|
+| **一个 FIT 文件只能有一个 `file_id` 消息**，必须位于文件最前 | `merge` 当前直接 `extend` N 个文件的所有消息，输出包含 N 份 `file_id`，违规 | C3 |
+| `file_creator`（mesg_num=49）通常每文件单份 | `merge` 同样未去重 | C3 |
+| `developer_data_id` 与 `field_description` 必须出现在引用它们的 developer field 之前 | 跨文件合并时未维护这一顺序 | C3（衍生） |
+| 截断的 definition message（长度 < 6 字节）应被识别为损坏并跳过 | `hexdump::estimate_definition_size` 在 `data.len() == 5` 时越界 panic | H1 |
+| GPX 1.1 `<trkpt>` 要求经纬度是真实坐标，不接受 (0, 0) 哨兵值 | `export.rs` 对无坐标 record 仍写 lat/lon = 0 | C2 |
+| 时间戳 `Value::DateTime` 与原始 `u32` epoch 之间的换算：Unix = FIT + 631065600 | 合并/排序时务必从 `Value::DateTime` 取真实 epoch，**不要**用 `Value::as_u64()`（DateTime 不响应 `as_u64`） | C3 |

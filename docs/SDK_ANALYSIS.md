@@ -44,10 +44,25 @@ pub enum Value {
     Bytes(Vec<u8>),               // 原始字节
     Bool(bool),                    // 布尔
     Enum(&'static str),           // 解析后的枚举名称 (e.g. "running")
+                                  // ⚠️ API 设计缺陷，见下文
     DateTime(DateTime<Utc>),      // 转换后的 UTC 时间
     Array(Vec<Value>),            // 数组类型字段
 }
 ```
+
+> **⚠️ `Value::Enum(&'static str)` 是已知 API 缺陷（fit-editor C1）。**
+>
+> 当消费者想要从动态数据（用户 CLI 输入、JSON 字段）构造一个 `Value::Enum` 时，
+> 必须把动态 `String` 转成 `&'static str`，唯一可行的办法就是 `Box::leak`，
+> 这是确定的内存泄漏。fit-editor 在 [`edit.rs:167`](../src/commands/edit.rs) 和
+> [`encode.rs:123`](../src/commands/encode.rs) 已经踩了这个坑。
+>
+> **Required SDK change (Phase 4.6 C1):** 把 `Value::Enum` 改为：
+> - `Value::Enum(Arc<str>)` —— 推荐；profile 表静态字符串用 `Arc::from(&'static str)` 是 O(1) 封装；
+> - 或 `Value::Enum(Cow<'static, str>)` —— borrow 由 SDK 静态供给，own 由消费者动态构造；
+> - 或 `Value::Enum(String)` —— 简单但 SDK 内部失去 'static 优化。
+>
+> fit-sdk-rust 与 fit-editor 是同一作者维护，此处协调改动可行。
 
 #### 3.2 Field 结构
 
@@ -132,7 +147,8 @@ RawMessage
 | 16 个 local definition 槽位 | 单 segment 最多 16 种消息类型 | LRU 自动处理，多 segment 链式编码 |
 | Developer 字段需要 DevFieldRegistry | 编码前必须有 field_description 消息 | 编码器自动从输入消息中收集 |
 | Components-synthesised 字段跳过写入 | 避免重复编码 | 编码器内部过滤 |
-| Enum 类型需匹配 Profile 名称 | Value::Enum 必须是合法的枚举名 | JSON 导出时使用枚举名 |
+| `Value::Enum(&'static str)` | 动态构造 enum 值需要 `Box::leak`，造成内存泄漏 | ⚠️ **SDK 必须改 API，见 §3.1** |
+| Decoder 错误是 `Vec<FitError>`，不是 `Result` | 消费者必须自己决定如何处理 | 建议 SDK 提供 `Decoder::builder.strict()` 选项 |
 
 ### 7. 与 SDK 的集成模式
 
@@ -184,3 +200,15 @@ let (msgs, errs) = Decoder::builder(&bytes)
 | 差异对比 | 无 | 消息/字段 diff 算法 |
 | 运动统计计算 | 无 | 聚合计算 |
 | Hex 带注释输出 | 无 | 消息边界追踪 |
+
+### 9. Required SDK changes (Phase 4.6)
+
+来自 2026-05-13 strict review（[`../Report.html`](../Report.html)）的 SDK 层面需求：
+
+| ID | 改动 | 理由 | 影响范围 |
+|----|------|------|----------|
+| SDK-1 | `Value::Enum(&'static str)` → `Value::Enum(Arc<str>)`（或 `Cow<'static, str>` / `String`） | 当前 API 强迫消费者 `Box::leak` 动态 enum 字符串 | fit-editor C1 完全消失；其他下游消费者同样受益 |
+| SDK-2 | `Decoder::builder.strict()` 模式：当 `read_all` 期间出现任何 `FitError` 时直接返回 `Err`，而不是 `(Vec<Message>, Vec<FitError>)` | 当前所有 fit-editor 命令一律 `let (msgs, _errors) = ...`，把错误吞掉，导致 `validate` 对消息层错误失明（H2） | fit-editor H2 修复的前提 |
+| SDK-3 | 提供小型损坏 fixture（截断 header、错 CRC、definition/data 不一致）供下游做错误路径测试 | 当前下游无法覆盖错误路径 | fit-editor 集成测试 A4 |
+
+SDK 是同一作者维护的 path dep，这些改动可以与 fit-editor Phase 4.6 同时落地。

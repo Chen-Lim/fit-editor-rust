@@ -59,23 +59,40 @@ FIT (Flexible and Interoperable Data Transfer) 是 Garmin 主导的二进制数�
 | 坐标转换 | `fit-editor export <file> --format gpx` | 导出为 GPX 格式 |
 | Schema 校验 | `fit-editor validate <file> --strict` | 严格模式校验（字段范围、必填字段检查） |
 
+#### 4.4 0.1.0 Known issues (2026-05-13 strict review)
+
+代码已实现 4.1–4.3 的全部命令，但 strict review 报告（见 [`../Report.html`](../Report.html)）发现以下行为偏离 PRD：
+
+| ID | 命令 | 行为偏差 | 修复阶段 |
+|----|------|----------|----------|
+| C1 | `edit` / `encode` | enum 字段每次解析泄漏 `String` 缓冲（`Box::leak`） | Phase 4.6 |
+| C2 | `export --format gpx` | 室内活动（无 GPS）的 record 被写为 `lat=0,lon=0` 假轨迹点 | Phase 4.6 |
+| C3 | `merge` | 输出包含多份 `file_id` / `file_creator`；timestamp 排序键失效（实际按文件顺序拼接） | Phase 4.6 |
+| H1 | `hexdump --annotate` | 截断输入触发 array index panic | Phase 4.6 |
+| H2 | `validate` | 仅校验 CRC，不检查 decoder-level 错误，可能对损坏文件返回 "valid" | Phase 4.6 |
+| H3 | 全局 | `--quiet` 已声明但未实现，开关无效 | Phase 4.6 |
+| H4 | 所有命令 | 无文件大小上限，恶意巨型输入会 OOM | Phase 4.6 |
+
+详见 [Rroadmap.md `Phase 4.6`](./Rroadmap.md) 与 [Report.html](../Report.html) 全文。
+
 ### 5. 非功能需求
 
 | 维度 | 要求 |
 |------|------|
 | **性能** | 单个 FIT 文件解码 < 100ms（典型 5MB Activity 文件） |
 | **跨平台** | 支持 macOS (ARM64/x86_64)、Linux (x86_64/ARM64)、Windows (x86_64) |
-| **可靠性** | 解码器不应 panic，所有错误通过 `FitError` 类型化传播 |
-| **CLI 体验** | 彩色输出、进度条（批量操作）、shell 补全 |
+| **可靠性** | 解码器不应 panic，所有错误通过 `FitError` 类型化传播。⚠️ 当前 0.1.0-alpha 在 `hexdump --annotate` 上仍存在一处 panic 路径（H1），将在 Phase 4.6 修复 |
+| **CLI 体验** | 彩色输出、进度条（批量操作）、shell 补全、TTY 自动检测 |
 | **无外部依赖** | 不依赖 libfit、Garmin SDK 或任何 C 库 |
-| **安装** | 通过 `cargo install` 或预编译二进制分发 |
+| **安装** | 通过 `cargo install` 或预编译二进制分发（计划，阻塞于 Phase 4.6） |
+| **输入大小** | 默认拒绝 > 256 MiB 的输入（计划，Phase 4.6），可通过 `--max-file-size` 覆盖 |
 
 ### 6. 技术约束
 
 - **FIT 协议版本:** v2.0 (protocol_version = 0x20), Profile v21.200
 - **SDK 限制:** 当前 SDK 不压缩时间戳编码（输出始终使用显式时间戳），round-trip 语义等价但不字节级相同
 - **Rust 版本:** MSRV 1.75+（与 SDK 一致）
-- **许可证:** Apache-2.0
+- **许可证:** GPL-3.0（与 `Cargo.toml` 一致；PRD 旧版误写为 Apache-2.0，已更正）
 
 ### 7. 成功指标
 
@@ -106,6 +123,8 @@ FIT (Flexible and Interoperable Data Transfer) 是 Garmin 主导的二进制数�
 | 风险 | 概率 | 影响 | 缓解措施 |
 |------|------|------|----------|
 | SDK Profile 数据不完整 | 中 | 高 | 预留 fallback 到 raw 值显示 |
-| 大文件内存压力 | 低 | 中 | 考虑流式导出（后续迭代） |
+| 大文件内存压力 | 中 | 高 | Phase 4.6 引入 `--max-file-size` guard，长期改流式 IO |
+| SDK `Value::Enum(&'static str)` API 强制消费者 leak 内存 | 高 | 高 | Phase 4.6 与 fit-sdk-rust 协调改为 `Arc<str>` |
 | Garmin 新协议版本不兼容 | 低 | 高 | SDK 层抽象，版本检查 |
 | 压缩时间戳 round-trip 文件增大 | 高 | 低 | 文档说明语义等价性 |
+| 二进制格式 fuzz 未覆盖，潜在 panic 路径 | 高 | 中 | Phase 4.6 引入 `cargo fuzz` target |
