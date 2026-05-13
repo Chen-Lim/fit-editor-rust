@@ -1,5 +1,12 @@
-pub mod validate;
-pub mod info;
+pub mod batch;
+pub mod diff;
 pub mod dump;
-pub mod export;
+pub mod edit;
 pub mod encode;
+pub mod export;
+pub mod hexdump;
+pub mod info;
+pub mod merge;
+pub mod split;
+pub mod summary;
+pub mod validate;

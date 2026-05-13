@@ -23,6 +23,7 @@ csv = "1"
 anyhow = "1"
 colored = "2"
 chrono = "0.4"
+glob = "0.3"
 
 [dev-dependencies]
 assert_cmd = "2"

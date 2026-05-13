@@ -148,6 +148,10 @@ pub enum Command {
         /// Ignore timestamp differences
         #[arg(long)]
         ignore_timestamps: bool,
+
+        /// Only compare messages of this type
+        #[arg(short, long)]
+        message: Option<String>,
     },
 
     /// Show activity summary statistics

@@ -71,7 +71,7 @@ fn json_value_to_message(val: &serde_json::Value) -> Result<Message, String> {
             .field_by_name(key)
             .ok_or_else(|| format!("unknown field '{key}' in message '{msg_type}'"))?;
 
-        let value = json_to_fit_value(fval, field_info.type_name);
+        let value = json_to_fit_value(fval, field_info);
 
         fields.push(Field {
             name: key.clone(),
@@ -90,13 +90,20 @@ fn json_value_to_message(val: &serde_json::Value) -> Result<Message, String> {
     })
 }
 
-fn json_to_fit_value(val: &serde_json::Value, type_name: &str) -> Value {
+fn json_to_fit_value(val: &serde_json::Value, fi: &fit::profile::FieldInfo) -> Value {
     match val {
         serde_json::Value::Null => Value::Invalid,
         serde_json::Value::Bool(b) => Value::Bool(*b),
         serde_json::Value::Number(n) => {
             let f = n.as_f64().unwrap_or(0.0);
-            match type_name {
+            // Scaled fields store physical values as Float so the encoder
+            // can reverse: raw = (physical + offset) * scale
+            let has_scale = fi.scale.is_some_and(|s| s != 1.0);
+            let has_offset = fi.offset.is_some_and(|o| o != 0.0);
+            if has_scale || has_offset {
+                return Value::Float(f);
+            }
+            match fi.type_name {
                 "uint8" | "uint8z" | "uint16" | "uint16z" | "uint32" | "uint32z"
                 | "uint64" | "uint64z" => Value::UInt(f as u64),
                 "sint8" | "sint16" | "sint32" | "sint64" => Value::SInt(f as i64),
@@ -105,17 +112,15 @@ fn json_to_fit_value(val: &serde_json::Value, type_name: &str) -> Value {
             }
         }
         serde_json::Value::String(s) => {
-            if is_datetime_type(type_name) {
+            if is_datetime_type(fi.type_name) {
                 if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(s) {
                     Value::DateTime(dt.with_timezone(&chrono::Utc))
                 } else {
                     Value::String(s.clone())
                 }
-            } else if !is_base_type(type_name) {
+            } else if !is_base_type(fi.type_name) {
                 // Treat as enum name
                 Value::Enum(Box::leak(s.clone().into_boxed_str()))
-            } else if type_name == "string" {
-                Value::String(s.clone())
             } else {
                 Value::String(s.clone())
             }

@@ -14,7 +14,7 @@ pub fn run(file: &str, verbose: bool) -> Result<(), CliError> {
     }
 
     let header = fit::FileHeader::parse(&bytes)
-        .map_err(|e| CliError::from(fit::FitError::from(e)))?;
+        .map_err(CliError::from)?;
 
     let (messages, errors) = fit::Decoder::builder(&bytes).build().read_all();
 
@@ -26,7 +26,7 @@ pub fn run(file: &str, verbose: bool) -> Result<(), CliError> {
 
     // Sort by count descending
     let mut sorted: Vec<_> = counts.into_iter().collect();
-    sorted.sort_by(|a, b| b.1.cmp(&a.1));
+    sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
 
     let proto_major = header.protocol_version >> 4;
     let proto_minor = header.protocol_version & 0x0F;
