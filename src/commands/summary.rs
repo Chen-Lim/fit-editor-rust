@@ -2,6 +2,8 @@ use std::path::Path;
 
 use colored::Colorize;
 use fit::{Decoder, Message, Value};
+use tabled::builder::Builder;
+use tabled::settings::Style;
 
 use crate::error::CliError;
 
@@ -15,34 +17,25 @@ pub fn run(file: &str) -> Result<(), CliError> {
 
     let (messages, _errors) = Decoder::builder(&bytes).build().read_all();
 
-    // Find session message for summary data
     let session = messages.iter().find(|m| m.name == "session");
-
-    // Find file_id for metadata
     let file_id = messages.iter().find(|m| m.name == "file_id");
-
-    // Find records for per-point stats
     let records: Vec<&Message> = messages.iter().filter(|m| m.name == "record").collect();
 
-    println!("{}", "Activity Summary".bold());
-    println!("{}", "─".repeat(40).dimmed());
+    let mut rows: Vec<(String, String)> = Vec::new();
 
-    // Sport
     let sport = session
         .and_then(|m| m.field("sport"))
         .and_then(|f| f.value.as_str())
         .unwrap_or("unknown");
-    println!("  {:<16} {}", "Sport:".dimmed(), sport.cyan());
+    rows.push(("Sport".into(), sport.to_string()));
 
-    // Start time
     let start_time = session
         .and_then(|m| m.field("start_time"))
         .or_else(|| file_id.and_then(|m| m.field("time_created")))
         .map(|f| format_value(&f.value))
         .unwrap_or_else(|| "?".into());
-    println!("  {:<16} {}", "Start Time:".dimmed(), start_time);
+    rows.push(("Start Time".into(), start_time));
 
-    // Duration
     let timer_time = session
         .and_then(|m| m.field("total_timer_time"))
         .and_then(|f| f.value.as_f64())
@@ -51,113 +44,106 @@ pub fn run(file: &str) -> Result<(), CliError> {
         .and_then(|m| m.field("total_elapsed_time"))
         .and_then(|f| f.value.as_f64())
         .unwrap_or(timer_time);
+    rows.push((
+        "Duration".into(),
+        format!(
+            "{} (timer) / {} (elapsed)",
+            format_duration(timer_time),
+            format_duration(elapsed_time)
+        ),
+    ));
 
-    println!(
-        "  {:<16} {} (timer) / {} (elapsed)",
-        "Duration:".dimmed(),
-        format_duration(timer_time),
-        format_duration(elapsed_time),
-    );
-
-    // Distance
     let distance = session
         .and_then(|m| m.field("total_distance"))
         .and_then(|f| f.value.as_f64())
         .unwrap_or(0.0);
     if distance > 0.0 {
-        if distance >= 1000.0 {
-            println!(
-                "  {:<16} {:.2} km",
-                "Distance:".dimmed(),
-                distance / 1000.0
-            );
+        let s = if distance >= 1000.0 {
+            format!("{:.2} km", distance / 1000.0)
         } else {
-            println!("  {:<16} {:.0} m", "Distance:".dimmed(), distance);
-        }
+            format!("{distance:.0} m")
+        };
+        rows.push(("Distance".into(), s));
     }
 
-    // Speed
     let avg_speed = session
         .and_then(|m| m.field("enhanced_avg_speed").or_else(|| m.field("avg_speed")))
         .and_then(|f| f.value.as_f64());
     let max_speed = session
         .and_then(|m| m.field("enhanced_max_speed").or_else(|| m.field("max_speed")))
         .and_then(|f| f.value.as_f64());
-
     if let Some(s) = avg_speed {
-        println!(
-            "  {:<16} {:.2} m/s ({:.1} km/h)",
-            "Avg Speed:".dimmed(),
-            s,
-            s * 3.6
-        );
+        rows.push((
+            "Avg Speed".into(),
+            format!("{s:.2} m/s ({:.1} km/h)", s * 3.6),
+        ));
     }
     if let Some(s) = max_speed {
-        println!(
-            "  {:<16} {:.2} m/s ({:.1} km/h)",
-            "Max Speed:".dimmed(),
-            s,
-            s * 3.6
-        );
+        rows.push((
+            "Max Speed".into(),
+            format!("{s:.2} m/s ({:.1} km/h)", s * 3.6),
+        ));
     }
 
-    // Heart rate
     let avg_hr = session
         .and_then(|m| m.field("avg_heart_rate"))
         .and_then(|f| f.value.as_f64());
     let max_hr = session
         .and_then(|m| m.field("max_heart_rate"))
         .and_then(|f| f.value.as_f64());
-
     if avg_hr.is_some() || max_hr.is_some() {
         let avg_str = avg_hr.map(|v| format!("{v:.0}")).unwrap_or_else(|| "?".into());
         let max_str = max_hr.map(|v| format!("{v:.0}")).unwrap_or_else(|| "?".into());
-        println!(
-            "  {:<16} {} bpm (max: {})",
-            "Heart Rate:".dimmed(),
-            avg_str,
-            max_str,
-        );
+        rows.push((
+            "Heart Rate".into(),
+            format!("{avg_str} bpm (max: {max_str})"),
+        ));
     }
 
-    // Calories
     let calories = session
         .and_then(|m| m.field("total_calories"))
         .and_then(|f| f.value.as_f64());
     if let Some(cal) = calories {
-        println!("  {:<16} {:.0} kcal", "Calories:".dimmed(), cal);
+        rows.push(("Calories".into(), format!("{cal:.0} kcal")));
     }
 
-    // Ascent / Descent
     let ascent = session
         .and_then(|m| m.field("total_ascent"))
         .and_then(|f| f.value.as_f64());
     let descent = session
         .and_then(|m| m.field("total_descent"))
         .and_then(|f| f.value.as_f64());
-
     if ascent.is_some() || descent.is_some() {
-        println!(
-            "  {:<16} {:.0} m ↑ / {:.0} m ↓",
-            "Elevation:".dimmed(),
-            ascent.unwrap_or(0.0),
-            descent.unwrap_or(0.0),
-        );
+        rows.push((
+            "Elevation".into(),
+            format!(
+                "{:.0} m ↑ / {:.0} m ↓",
+                ascent.unwrap_or(0.0),
+                descent.unwrap_or(0.0)
+            ),
+        ));
     }
 
-    // Cadence
     let avg_cadence = session
         .and_then(|m| m.field("avg_cadence"))
         .and_then(|f| f.value.as_f64());
     if let Some(cad) = avg_cadence {
-        println!("  {:<16} {:.0} rpm", "Avg Cadence:".dimmed(), cad);
+        rows.push(("Avg Cadence".into(), format!("{cad:.0} rpm")));
     }
 
-    // Record stats
+    println!("{}", "Activity Summary".bold());
+    let mut b = Builder::default();
+    for (k, v) in &rows {
+        b.push_record([k.clone(), v.clone()]);
+    }
+    let mut t = b.build();
+    t.with(Style::sharp());
+    println!("{t}");
+
     if !records.is_empty() {
-        println!();
-        println!("{}", "Records".bold());
-        println!("  {:<16} {}", "Data Points:".dimmed(), records.len());
+        println!("\n{}", "Records".bold());
+        let mut rb = Builder::default();
+        rb.push_record(["Data Points".to_string(), records.len().to_string()]);
 
         let hr_values: Vec<f64> = records
             .iter()
@@ -167,13 +153,15 @@ pub fn run(file: &str) -> Result<(), CliError> {
         if !hr_values.is_empty() {
             let min_hr = hr_values.iter().cloned().fold(f64::INFINITY, f64::min);
             let max_hr = hr_values.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-            println!(
-                "  {:<16} {:.0} - {:.0} bpm",
-                "HR Range:".dimmed(),
-                min_hr,
-                max_hr,
-            );
+            rb.push_record([
+                "HR Range".to_string(),
+                format!("{min_hr:.0} - {max_hr:.0} bpm"),
+            ]);
         }
+
+        let mut rt = rb.build();
+        rt.with(Style::sharp());
+        println!("{rt}");
     }
 
     Ok(())

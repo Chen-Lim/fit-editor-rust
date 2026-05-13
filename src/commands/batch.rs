@@ -2,10 +2,11 @@ use std::process::Command;
 
 use colored::Colorize;
 use glob::glob;
+use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::error::CliError;
 
-pub fn run(pattern: &str, cmd_args: &[String]) -> Result<(), CliError> {
+pub fn run(pattern: &str, cmd_args: &[String], stdout_tty: bool) -> Result<(), CliError> {
     if cmd_args.is_empty() {
         return Err(CliError::Io(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
@@ -23,26 +24,27 @@ pub fn run(pattern: &str, cmd_args: &[String]) -> Result<(), CliError> {
         return Ok(());
     }
 
-    println!(
-        "{} files matched '{}'",
-        entries.len().to_string().cyan(),
-        pattern
-    );
-    println!();
+    let bar = if stdout_tty {
+        let b = ProgressBar::new(entries.len() as u64);
+        b.set_style(
+            ProgressStyle::with_template(
+                "[{bar:40.cyan/blue}] {pos}/{len} {wide_msg}",
+            )
+            .unwrap()
+            .progress_chars("=>-"),
+        );
+        b
+    } else {
+        ProgressBar::hidden()
+    };
 
     let mut succeeded = 0usize;
     let mut failed = 0usize;
 
-    for (i, path) in entries.iter().enumerate() {
-        let path_str = path.to_string_lossy();
-        print!(
-            "[{}/{}] {} ... ",
-            i + 1,
-            entries.len(),
-            path_str.dimmed()
-        );
+    for path in &entries {
+        let path_str = path.to_string_lossy().to_string();
+        bar.set_message(path_str.clone());
 
-        // Build command: replace placeholder or append file path
         let mut cmd = Command::new(&cmd_args[0]);
         if cmd_args.len() > 1 {
             cmd.args(&cmd_args[1..]);
@@ -52,38 +54,42 @@ pub fn run(pattern: &str, cmd_args: &[String]) -> Result<(), CliError> {
         match cmd.output() {
             Ok(output) => {
                 if output.status.success() {
-                    println!("{}", "ok".green());
                     succeeded += 1;
-                    // Show stdout if non-empty
                     let stdout = String::from_utf8_lossy(&output.stdout);
                     if !stdout.trim().is_empty() {
+                        bar.println(format!("{} {path_str}", "ok".green()));
                         for line in stdout.lines() {
-                            println!("    {line}");
+                            bar.println(format!("    {line}"));
                         }
+                    } else {
+                        bar.println(format!("{} {path_str}", "ok".green()));
                     }
                 } else {
-                    println!(
-                        "{} (exit {})",
+                    failed += 1;
+                    bar.println(format!(
+                        "{} {path_str} (exit {})",
                         "FAIL".red(),
                         output.status.code().unwrap_or(-1)
-                    );
+                    ));
                     let stderr = String::from_utf8_lossy(&output.stderr);
                     if !stderr.trim().is_empty() {
                         for line in stderr.lines() {
-                            eprintln!("    {line}");
+                            bar.println(format!("    {line}"));
                         }
                     }
-                    failed += 1;
                 }
             }
             Err(e) => {
-                println!("{} ({e})", "ERROR".red());
                 failed += 1;
+                bar.println(format!("{} {path_str} ({e})", "ERROR".red()));
             }
         }
+
+        bar.inc(1);
     }
 
-    println!();
+    bar.finish_and_clear();
+
     println!(
         "{} succeeded, {} failed",
         succeeded.to_string().green(),

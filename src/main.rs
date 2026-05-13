@@ -2,19 +2,26 @@ mod cli;
 mod commands;
 mod error;
 
-use clap::Parser;
+use std::io::{self, IsTerminal};
+
+use clap::{CommandFactory, Parser};
 use cli::{Cli, Command};
 
 fn main() {
     let cli = Cli::parse();
 
-    if let Err(e) = run(cli) {
+    let stdout_tty = io::stdout().is_terminal();
+    if cli.no_color || !stdout_tty {
+        colored::control::set_override(false);
+    }
+
+    if let Err(e) = run(cli, stdout_tty) {
         eprintln!("error: {e}");
         std::process::exit(1);
     }
 }
 
-fn run(cli: Cli) -> Result<(), error::CliError> {
+fn run(cli: Cli, stdout_tty: bool) -> Result<(), error::CliError> {
     match &cli.command {
         Command::Validate { file } => commands::validate::run(file, cli.verbose),
 
@@ -87,6 +94,12 @@ fn run(cli: Cli) -> Result<(), error::CliError> {
             annotate,
         } => commands::hexdump::run(file, *bytes, *skip_header, *annotate),
 
-        Command::Batch { glob, command } => commands::batch::run(glob, command),
+        Command::Batch { glob, command } => commands::batch::run(glob, command, stdout_tty),
+
+        Command::Completion { shell } => {
+            let mut cmd = Cli::command();
+            clap_complete::generate(*shell, &mut cmd, "fit-editor", &mut io::stdout());
+            Ok(())
+        }
     }
 }

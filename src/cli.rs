@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
+use clap_complete::Shell;
 
 #[derive(Parser)]
 #[command(name = "fit-editor", version, about = "Pure-Rust FIT file editor & viewer")]
@@ -10,6 +11,10 @@ pub struct Cli {
     /// Quiet mode (results only, no decoration)
     #[arg(short, long, global = true)]
     pub quiet: bool,
+
+    /// Disable colored output (also auto-disabled when stdout is not a TTY)
+    #[arg(long, global = true)]
+    pub no_color: bool,
 
     #[command(subcommand)]
     pub command: Command,
@@ -186,6 +191,12 @@ pub enum Command {
         /// Command to run on each file
         #[arg(last = true)]
         command: Vec<String>,
+    },
+
+    /// Generate shell completion script (bash, zsh, fish, powershell, elvish)
+    Completion {
+        /// Target shell
+        shell: Shell,
     },
 }
 

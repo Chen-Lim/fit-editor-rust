@@ -292,7 +292,8 @@ OUTPUT:
 ### Shell 补全
 
 ```
-fit-editor --generate-completion bash    # → /etc/bash_completion.d/fit-editor
-fit-editor --generate-completion zsh     # → ~/.zsh/completions/_fit-editor
-fit-editor --generate-completion fish    # → ~/.config/fish/completions/fit-editor.fish
+fit-editor completion bash > /etc/bash_completion.d/fit-editor
+fit-editor completion zsh > ~/.zsh/completions/_fit-editor
+fit-editor completion fish > ~/.config/fish/completions/fit-editor.fish
+fit-editor completion powershell > $PROFILE
 ```
