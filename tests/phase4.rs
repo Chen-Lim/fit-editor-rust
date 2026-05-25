@@ -67,13 +67,7 @@ fn batch_non_tty_runs_to_completion() {
 
     Command::cargo_bin("fit-editor")
         .unwrap()
-        .args([
-            "batch",
-            &pattern,
-            "--",
-            bin.to_str().unwrap(),
-            "validate",
-        ])
+        .args(["batch", &pattern, "--", bin.to_str().unwrap(), "validate"])
         .assert()
         .success()
         .stdout(predicate::str::contains("succeeded"));

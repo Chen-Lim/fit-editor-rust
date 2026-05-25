@@ -2,7 +2,11 @@ use clap::{Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 
 #[derive(Parser)]
-#[command(name = "fit-editor", version, about = "Pure-Rust FIT file editor & viewer")]
+#[command(
+    name = "fit-editor",
+    version,
+    about = "Pure-Rust FIT file editor & viewer"
+)]
 pub struct Cli {
     /// Verbose output (show decode warnings)
     #[arg(short, long, global = true)]

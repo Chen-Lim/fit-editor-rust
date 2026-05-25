@@ -51,11 +51,7 @@ pub enum CliError {
     /// Decoder reported errors
     DecodeErrors(usize),
     /// File exceeds size limit
-    FileTooLarge {
-        path: String,
-        size: u64,
-        max: u64,
-    },
+    FileTooLarge { path: String, size: u64, max: u64 },
     /// IO error
     Io(std::io::Error),
     /// JSON error
@@ -67,10 +63,7 @@ impl fmt::Display for CliError {
         match self {
             Self::NotFit(path) => write!(f, "{path}: not a FIT file"),
             Self::Truncated { expected, actual } => {
-                write!(
-                    f,
-                    "file truncated: expected {expected} bytes, got {actual}"
-                )
+                write!(f, "file truncated: expected {expected} bytes, got {actual}")
             }
             Self::CrcMismatch {
                 stored,

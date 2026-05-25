@@ -18,8 +18,7 @@ pub fn run(
     }
 
     let start = if skip_header {
-        let header = fit::FileHeader::parse(&bytes)
-            .map_err(CliError::from)?;
+        let header = fit::FileHeader::parse(&bytes).map_err(CliError::from)?;
         header.header_size as usize
     } else {
         0
@@ -56,7 +55,13 @@ fn hexdump_plain(data: &[u8], offset_base: usize) {
         // ASCII representation
         let ascii: String = chunk
             .iter()
-            .map(|&b| if (0x20..=0x7E).contains(&b) { b as char } else { '.' })
+            .map(|&b| {
+                if (0x20..=0x7E).contains(&b) {
+                    b as char
+                } else {
+                    '.'
+                }
+            })
             .collect();
 
         println!(

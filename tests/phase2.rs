@@ -200,11 +200,16 @@ fn edit_remove_message_removes_specified_type() {
 fn hexdump_shows_file_header() {
     Command::cargo_bin("fit-editor")
         .unwrap()
-        .args(["hexdump", test_fit_path().to_str().unwrap(), "--bytes", "16"])
+        .args([
+            "hexdump",
+            test_fit_path().to_str().unwrap(),
+            "--bytes",
+            "16",
+        ])
         .assert()
         .success()
         .stdout(
-            predicate::str::contains(".FIT")  // signature
+            predicate::str::contains(".FIT") // signature
                 .and(predicate::str::contains("0e")), // header size byte
         );
 }

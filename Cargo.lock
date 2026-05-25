@@ -333,7 +333,9 @@ dependencies = [
 
 [[package]]
 name = "fit-sdk-rust"
-version = "0.2.0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b96788152c6ada9557f700e67d50321dabb9aff5fab41ebe3e6da43cabebf35"
 dependencies = [
  "chrono",
  "smallvec",

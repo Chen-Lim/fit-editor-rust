@@ -51,10 +51,7 @@ pub fn run(
         );
     }
     if !parsed.is_empty() {
-        println!(
-            "Applied {} field edit(s)",
-            parsed.len().to_string().green()
-        );
+        println!("Applied {} field edit(s)", parsed.len().to_string().green());
     }
     println!(
         "{} → {} ({} bytes)",
@@ -87,9 +84,7 @@ fn parse_set_arg(arg: &str) -> Result<FieldEdit, CliError> {
 
     // Parse path: "session.total_distance" or "session[2].total_distance"
     let dot_pos = path.rfind('.').ok_or_else(|| {
-        CliError::InvalidFieldPath(format!(
-            "field path must be <message>.<field>: {path}"
-        ))
+        CliError::InvalidFieldPath(format!("field path must be <message>.<field>: {path}"))
     })?;
 
     let msg_part = &path[..dot_pos];

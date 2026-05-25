@@ -67,10 +67,16 @@ pub fn run(file: &str) -> Result<(), CliError> {
     }
 
     let avg_speed = session
-        .and_then(|m| m.field("enhanced_avg_speed").or_else(|| m.field("avg_speed")))
+        .and_then(|m| {
+            m.field("enhanced_avg_speed")
+                .or_else(|| m.field("avg_speed"))
+        })
         .and_then(|f| f.value.as_f64());
     let max_speed = session
-        .and_then(|m| m.field("enhanced_max_speed").or_else(|| m.field("max_speed")))
+        .and_then(|m| {
+            m.field("enhanced_max_speed")
+                .or_else(|| m.field("max_speed"))
+        })
         .and_then(|f| f.value.as_f64());
     if let Some(s) = avg_speed {
         rows.push((
@@ -92,8 +98,12 @@ pub fn run(file: &str) -> Result<(), CliError> {
         .and_then(|m| m.field("max_heart_rate"))
         .and_then(|f| f.value.as_f64());
     if avg_hr.is_some() || max_hr.is_some() {
-        let avg_str = avg_hr.map(|v| format!("{v:.0}")).unwrap_or_else(|| "?".into());
-        let max_str = max_hr.map(|v| format!("{v:.0}")).unwrap_or_else(|| "?".into());
+        let avg_str = avg_hr
+            .map(|v| format!("{v:.0}"))
+            .unwrap_or_else(|| "?".into());
+        let max_str = max_hr
+            .map(|v| format!("{v:.0}"))
+            .unwrap_or_else(|| "?".into());
         rows.push((
             "Heart Rate".into(),
             format!("{avg_str} bpm (max: {max_str})"),

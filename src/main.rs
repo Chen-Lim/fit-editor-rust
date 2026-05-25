@@ -17,8 +17,7 @@ fn main() {
 
     if let Err(e) = run(cli, stdout_tty) {
         let code = match &e {
-            error::CliError::BatchPartialFailure { .. }
-            | error::CliError::DecodeErrors(_) => 2,
+            error::CliError::BatchPartialFailure { .. } | error::CliError::DecodeErrors(_) => 2,
             _ => 1,
         };
         eprintln!("error: {e}");

@@ -16,9 +16,7 @@ const METADATA_TYPES: &[&str] = &[
 
 pub fn run(files: &[String], output: &str) -> Result<(), CliError> {
     if files.len() < 2 {
-        return Err(CliError::BadUsage(
-            "merge requires at least 2 files".into(),
-        ));
+        return Err(CliError::BadUsage("merge requires at least 2 files".into()));
     }
 
     let mut all_messages: Vec<Message> = Vec::new();

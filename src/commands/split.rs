@@ -32,9 +32,7 @@ pub fn run(
 
     let split_point = if let Some(ts_str) = at_timestamp {
         let target = chrono::DateTime::parse_from_rfc3339(ts_str)
-            .map_err(|_| {
-                CliError::InvalidFieldPath(format!("invalid timestamp: {ts_str}"))
-            })?
+            .map_err(|_| CliError::InvalidFieldPath(format!("invalid timestamp: {ts_str}")))?
             .with_timezone(&chrono::Utc);
 
         messages

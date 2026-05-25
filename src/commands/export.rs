@@ -45,8 +45,7 @@ pub fn run(
         return Err(CliError::NotFit(file.to_string()));
     }
 
-    let header = fit::FileHeader::parse(&bytes)
-        .map_err(CliError::from)?;
+    let header = fit::FileHeader::parse(&bytes).map_err(CliError::from)?;
 
     let (messages, _errors) = Decoder::builder(&bytes).build().read_all();
 
@@ -195,12 +194,10 @@ fn export_gpx(messages: &[Message], output: Option<&str>) -> Result<(), CliError
             .or_else(|| record.field("altitude"))
             .and_then(|f| f.value.as_f64());
 
-        let time = record
-            .field("timestamp")
-            .and_then(|f| match &f.value {
-                Value::DateTime(dt) => Some(dt.to_rfc3339()),
-                _ => None,
-            });
+        let time = record.field("timestamp").and_then(|f| match &f.value {
+            Value::DateTime(dt) => Some(dt.to_rfc3339()),
+            _ => None,
+        });
 
         let has_coords = lat.is_some() && lon.is_some();
         if !has_coords {
@@ -275,9 +272,7 @@ fn value_to_json(value: &Value) -> serde_json::Value {
         Value::Bool(b) => serde_json::json!(b),
         Value::Enum(name) => serde_json::json!(name),
         Value::DateTime(dt) => serde_json::json!(dt.to_rfc3339()),
-        Value::Array(arr) => {
-            serde_json::Value::Array(arr.iter().map(value_to_json).collect())
-        }
+        Value::Array(arr) => serde_json::Value::Array(arr.iter().map(value_to_json).collect()),
     }
 }
 

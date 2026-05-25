@@ -33,15 +33,12 @@ fn parse_messages_from_json(json: &serde_json::Value) -> Result<Vec<Message>, Cl
     let arr = json
         .get("messages")
         .and_then(|v| v.as_array())
-        .ok_or_else(|| {
-            CliError::InvalidFieldPath("JSON must have a 'messages' array".into())
-        })?;
+        .ok_or_else(|| CliError::InvalidFieldPath("JSON must have a 'messages' array".into()))?;
 
     let mut messages = Vec::new();
     for (idx, entry) in arr.iter().enumerate() {
-        let msg = json_value_to_message(entry).map_err(|e| {
-            CliError::InvalidFieldPath(format!("message[{idx}]: {e}"))
-        })?;
+        let msg = json_value_to_message(entry)
+            .map_err(|e| CliError::InvalidFieldPath(format!("message[{idx}]: {e}")))?;
         messages.push(msg);
     }
     Ok(messages)
@@ -58,8 +55,8 @@ fn json_value_to_message(val: &serde_json::Value) -> Result<Message, String> {
         .and_then(|v| v.as_object())
         .ok_or("missing 'fields' object")?;
 
-    let mesg_num = MesgNum::from_name(msg_type)
-        .ok_or_else(|| format!("unknown message type: {msg_type}"))?;
+    let mesg_num =
+        MesgNum::from_name(msg_type).ok_or_else(|| format!("unknown message type: {msg_type}"))?;
     let global_mesg_num = mesg_num as u16;
 
     let info = mesg_info_by_num(global_mesg_num)
@@ -71,8 +68,8 @@ fn json_value_to_message(val: &serde_json::Value) -> Result<Message, String> {
             .field_by_name(key)
             .ok_or_else(|| format!("unknown field '{key}' in message '{msg_type}'"))?;
 
-        let value = json_to_fit_value(fval, field_info)
-            .map_err(|e| format!("field '{key}': {e}"))?;
+        let value =
+            json_to_fit_value(fval, field_info).map_err(|e| format!("field '{key}': {e}"))?;
 
         fields.push(Field {
             name: key.clone(),
@@ -91,7 +88,10 @@ fn json_value_to_message(val: &serde_json::Value) -> Result<Message, String> {
     })
 }
 
-fn json_to_fit_value(val: &serde_json::Value, fi: &fit::profile::FieldInfo) -> Result<Value, String> {
+fn json_to_fit_value(
+    val: &serde_json::Value,
+    fi: &fit::profile::FieldInfo,
+) -> Result<Value, String> {
     match val {
         serde_json::Value::Null => Ok(Value::Invalid),
         serde_json::Value::Bool(b) => Ok(Value::Bool(*b)),
@@ -101,18 +101,25 @@ fn json_to_fit_value(val: &serde_json::Value, fi: &fit::profile::FieldInfo) -> R
             let has_scale = fi.scale.is_some_and(|s| s != 1.0);
             let has_offset = fi.offset.is_some_and(|o| o != 0.0);
             if has_scale || has_offset {
-                let f = n.as_f64().ok_or("expected numeric value for scaled field")?;
+                let f = n
+                    .as_f64()
+                    .ok_or("expected numeric value for scaled field")?;
                 return Ok(Value::Float(f));
             }
             match fi.type_name {
-                "uint8" | "uint8z" | "uint16" | "uint16z" | "uint32" | "uint32z"
-                | "uint64" | "uint64z" => {
-                    let v = n.as_u64()
-                        .ok_or_else(|| format!("expected non-negative integer for {}, got {n}", fi.type_name))?;
+                "uint8" | "uint8z" | "uint16" | "uint16z" | "uint32" | "uint32z" | "uint64"
+                | "uint64z" => {
+                    let v = n.as_u64().ok_or_else(|| {
+                        format!(
+                            "expected non-negative integer for {}, got {n}",
+                            fi.type_name
+                        )
+                    })?;
                     Ok(Value::UInt(v))
                 }
                 "sint8" | "sint16" | "sint32" | "sint64" => {
-                    let v = n.as_i64()
+                    let v = n
+                        .as_i64()
                         .ok_or_else(|| format!("expected integer for {}, got {n}", fi.type_name))?;
                     Ok(Value::SInt(v))
                 }

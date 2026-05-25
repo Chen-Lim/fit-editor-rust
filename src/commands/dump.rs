@@ -67,11 +67,7 @@ pub fn run(
 }
 
 fn print_full(idx: usize, msg: &Message, field_filter: &Option<Vec<&str>>) {
-    println!(
-        "[{}] {}",
-        idx.to_string().dimmed(),
-        msg.name.cyan().bold()
-    );
+    println!("[{}] {}", idx.to_string().dimmed(), msg.name.cyan().bold());
 
     for field in &msg.fields {
         if let Some(filter) = field_filter {
@@ -87,7 +83,12 @@ fn print_full(idx: usize, msg: &Message, field_filter: &Option<Vec<&str>>) {
             .map(|u| format!(" {u}"))
             .unwrap_or_default();
 
-        println!("  {} = {}{}", field.name.green(), value_str, unit_str.dimmed());
+        println!(
+            "  {} = {}{}",
+            field.name.green(),
+            value_str,
+            unit_str.dimmed()
+        );
     }
     println!();
 }

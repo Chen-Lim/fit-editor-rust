@@ -39,7 +39,12 @@ pub fn run(
             (Some(a), Some(b)) => {
                 if a.name != b.name {
                     println!("[{}] --- {} {}", i, a.name.red(), "(type changed)".dimmed());
-                    println!("[{}] +++ {} {}", i, b.name.green(), "(type changed)".dimmed());
+                    println!(
+                        "[{}] +++ {} {}",
+                        i,
+                        b.name.green(),
+                        "(type changed)".dimmed()
+                    );
                     println!();
                     diffs_found += 1;
                     continue;
@@ -71,10 +76,7 @@ pub fn run(
     if diffs_found == 0 {
         println!("{}", "No differences found".green());
     } else {
-        println!(
-            "{} difference(s) found",
-            diffs_found.to_string().yellow()
-        );
+        println!("{} difference(s) found", diffs_found.to_string().yellow());
     }
 
     Ok(())

@@ -26,11 +26,9 @@ pub fn run(pattern: &str, cmd_args: &[String], stdout_tty: bool) -> Result<(), C
     let bar = if stdout_tty {
         let b = ProgressBar::new(entries.len() as u64);
         b.set_style(
-            ProgressStyle::with_template(
-                "[{bar:40.cyan/blue}] {pos}/{len} {wide_msg}",
-            )
-            .expect("valid progress bar template")
-            .progress_chars("=>-"),
+            ProgressStyle::with_template("[{bar:40.cyan/blue}] {pos}/{len} {wide_msg}")
+                .expect("valid progress bar template")
+                .progress_chars("=>-"),
         );
         b
     } else {
