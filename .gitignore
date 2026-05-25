@@ -13,18 +13,12 @@
 /fit_output/
 /fit_source/
 Report.html
+README.html
 
 # Agent
-.claude/*
-!.claude/skills/
-!.claude/CLAUDE.md
-!.claude/settings.json
+.claude/
 .codex
 .gemini
 
-
-# Added by cargo
-#
-# already existing elements were commented out
-
-#/target
+# Docs
+docs/
