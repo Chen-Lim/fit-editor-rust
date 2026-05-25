@@ -16,12 +16,18 @@ Built on top of [fit-sdk-rust](https://github.com/Chen-Lim/fit-sdk-rust), `fit-e
 ## Installation
 
 ```bash
+cargo install fit-editor
+```
+
+Or build from source:
+
+```bash
 git clone https://github.com/Chen-Lim/fit-editor-rust.git
 cd fit-editor-rust
 cargo install --path .
 ```
 
-Requires Rust 1.75+ and a sibling clone of [fit-sdk-rust](https://github.com/Chen-Lim/fit-sdk-rust) (path dependency).
+Requires Rust 1.75+.
 
 ## Quick start
 

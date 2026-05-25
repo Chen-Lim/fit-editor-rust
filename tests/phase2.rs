@@ -3,7 +3,7 @@ use predicates::prelude::*;
 use std::path::Path;
 
 /// Path to the test FIT file from the SDK fixtures.
-const TEST_FIT: &str = "../fit-sdk-rust/tests/fixtures/test_data/Activity.fit";
+const TEST_FIT: &str = "tests/fixtures/Activity.fit";
 
 fn test_fit_path() -> &'static Path {
     Path::new(TEST_FIT)

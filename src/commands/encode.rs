@@ -134,7 +134,7 @@ fn json_to_fit_value(val: &serde_json::Value, fi: &fit::profile::FieldInfo) -> R
                     Ok(Value::String(s.clone()))
                 }
             } else if !is_base_type(fi.type_name) {
-                Ok(Value::Enum(s.clone()))
+                Ok(Value::Enum(s.clone().into()))
             } else {
                 Ok(Value::String(s.clone()))
             }

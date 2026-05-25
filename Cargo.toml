@@ -15,7 +15,7 @@ name = "fit-editor"
 path = "src/main.rs"
 
 [dependencies]
-fit-sdk-rust = { path = "../fit-sdk-rust" }
+fit-sdk-rust = "0.2"
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4"
 serde = { version = "1", features = ["derive"] }

@@ -164,7 +164,7 @@ fn parse_field_value(s: &str, template: &Value) -> Value {
         Value::SInt(_) => s.parse::<i64>().map(Value::SInt).unwrap_or(Value::Invalid),
         Value::Float(_) => s.parse::<f64>().map(Value::Float).unwrap_or(Value::Invalid),
         Value::Bool(_) => s.parse::<bool>().map(Value::Bool).unwrap_or(Value::Invalid),
-        Value::Enum(_) => Value::Enum(s.to_string()),
+        Value::Enum(_) => Value::Enum(s.to_string().into()),
         Value::DateTime(_) => chrono::DateTime::parse_from_rfc3339(s)
             .map(|dt| Value::DateTime(dt.with_timezone(&chrono::Utc)))
             .unwrap_or(Value::Invalid),

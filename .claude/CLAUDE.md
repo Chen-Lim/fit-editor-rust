@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`fit-editor` is a pure-Rust CLI tool for viewing, editing, and converting Garmin FIT files. Built on top of a local path dependency `fit-sdk-rust` (sibling repo at `../fit-sdk-rust`).
+`fit-editor` is a pure-Rust CLI tool for viewing, editing, and converting Garmin FIT files. Published on crates.io, depends on `fit-sdk-rust`.
 
 ## Build & Test Commands
 
@@ -18,7 +18,7 @@ cargo clippy                   # lint
 cargo run -- <args>            # run debug binary, e.g. cargo run -- info Activity.fit
 ```
 
-Integration tests depend on FIT fixture files at `../fit-sdk-rust/tests/fixtures/test_data/Activity.fit`. Clone the fit-sdk-rust repo as a sibling directory before running tests.
+Integration tests use a fixture file at `tests/fixtures/Activity.fit`.
 
 ## Architecture
 
@@ -47,7 +47,7 @@ Each command module is self-contained: it receives parsed CLI args, reads FIT fi
 
 ## Key SDK Integration
 
-The `fit-sdk-rust` crate is a local path dependency. Core API:
+`fit-sdk-rust` is a crates.io dependency. Core API:
 
 ```rust
 // Decode: bytes → messages
@@ -69,5 +69,5 @@ Messages are `fit::Message` with fields accessed via `.field("name")` returning 
 - One command module per file, each with `pub fn run(...) -> Result<(), CliError>`
 - Global flags (`-v`, `-q`, `--no-color`) are in `cli.rs` on the `Cli` struct, accessed as `cli.verbose` etc.
 - `build.rs` generates man pages via `clap_mangen` at compile time (output in `target/<profile>/build/fit-editor-*/out/man/`)
-- Tests use `assert_cmd` + `predicates` for CLI integration testing; fixtures come from `../fit-sdk-rust/tests/fixtures/`
+- Tests use `assert_cmd` + `predicates` for CLI integration testing; fixtures at `tests/fixtures/`
 - Output formatting: `tabled` for tables, `colored` for TTY colors (auto-disabled when not TTY or `--no-color`), `indicatif` for progress bars

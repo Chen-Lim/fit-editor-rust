@@ -1,7 +1,7 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
 
-const TEST_FIT: &str = "../fit-sdk-rust/tests/fixtures/test_data/Activity.fit";
+const TEST_FIT: &str = "tests/fixtures/Activity.fit";
 
 #[test]
 fn completion_zsh_emits_compdef() {
