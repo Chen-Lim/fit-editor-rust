@@ -100,7 +100,7 @@ fn print_compact(idx: usize, msg: &Message, field_filter: &Option<Vec<&str>>) {
         .filter(|f| {
             field_filter
                 .as_ref()
-                .map_or(true, |ff| ff.contains(&f.name.as_str()))
+                .is_none_or(|ff| ff.contains(&f.name.as_str()))
         })
         .map(|f| format!("{}={}", f.name, format_value(&f.value)))
         .collect();

@@ -76,7 +76,7 @@ fn export_json(
         messages: messages
             .iter()
             .enumerate()
-            .filter(|(_, msg)| message_filter.map_or(true, |f| msg.name == f))
+            .filter(|(_, msg)| message_filter.is_none_or(|f| msg.name == f))
             // Skip developer metadata — meaningless without developer fields
             .filter(|(_, msg)| !matches!(msg.name, "field_description" | "developer_data_id"))
             .map(|(idx, msg)| ExportMessage {

@@ -24,7 +24,7 @@ pub fn run(
     let (msgs1, _) = Decoder::builder(&bytes1).build().read_all();
     let (msgs2, _) = Decoder::builder(&bytes2).build().read_all();
 
-    let filter = |m: &&Message| message_filter.map_or(true, |f| m.name == f);
+    let filter = |m: &&Message| message_filter.is_none_or(|f| m.name == f);
     let filtered1: Vec<&Message> = msgs1.iter().filter(filter).collect();
     let filtered2: Vec<&Message> = msgs2.iter().filter(filter).collect();
 
