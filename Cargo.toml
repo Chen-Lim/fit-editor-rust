@@ -2,7 +2,7 @@
 name = "fit-editor"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.80"
 license = "Apache-2.0"
 authors = ["Chen <chenchemlim@gmail.com>"]
 description = "Pure-Rust CLI tool for viewing, editing, and converting Garmin FIT files"
@@ -39,4 +39,4 @@ tempfile = "3"
 
 [profile.release]
 lto = "thin"
-# strip = true  # requires rust-version >= 1.77
+strip = true
