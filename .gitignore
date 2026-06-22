@@ -19,6 +19,8 @@ README.html
 .claude/
 .codex
 .gemini
+.agents/
+AGENTS.md
 
 # Docs
 docs/
