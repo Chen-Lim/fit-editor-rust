@@ -31,6 +31,28 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets -- -D warnings
 
+  msrv:
+    name: MSRV Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.75"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: msrv
+      - run: cargo check
+
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -46,3 +68,27 @@ jobs:
           key: ${{ matrix.os }}
       - run: cargo test
       - run: cargo build --release
+
+  manpage:
+    name: Man Page Generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: manpage
+      - name: Build and verify man pages
+        run: |
+          cargo build
+          MAN_DIR=$(find target/debug/build -path '*/out/man' -type d | head -1)
+          if [ -z "$MAN_DIR" ]; then
+            echo "::error::Man page output directory not found"
+            exit 1
+          fi
+          MAN_COUNT=$(find "$MAN_DIR" -name '*.1' | wc -l)
+          echo "Found $MAN_COUNT man pages in $MAN_DIR"
+          if [ "$MAN_COUNT" -eq 0 ]; then
+            echo "::error::No man pages generated"
+            exit 1
+          fi

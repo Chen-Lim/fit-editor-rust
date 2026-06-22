@@ -73,6 +73,16 @@ jobs:
           Compress-Archive -Path fit-editor.exe -DestinationPath ../../../fit-editor-${{ github.ref_name }}-${{ matrix.target }}.zip
           cd -
 
+      - name: Generate checksum
+        run: |
+          cd target/${{ matrix.target }}/release
+          if [ "${{ matrix.archive }}" = "zip" ]; then
+            sha256sum ../../../fit-editor-${{ github.ref_name }}-${{ matrix.target }}.zip > ../../../fit-editor-${{ github.ref_name }}-${{ matrix.target }}.sha256
+          else
+            sha256sum ../../../fit-editor-${{ github.ref_name }}-${{ matrix.target }}.tar.gz > ../../../fit-editor-${{ github.ref_name }}-${{ matrix.target }}.sha256
+          fi
+        shell: bash
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
